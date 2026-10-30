@@ -25,7 +25,7 @@ The status line shows only the values that Claude Code sends to status lines ([a
 ## Requirements
 
 - Claude Code with plugin support
-- [Node.js][nodejs] 20 or later, with `node` on your `PATH`
+- [Node.js][nodejs] 22.18 or later, with `node` on your `PATH`. The status line is written in TypeScript, and Node.js 22.18 and later run it as is (type stripping), with no build step
 - `git`, for line 3 inside repositories
 
 macOS, Linux, and Windows are supported. On Windows, the status line works whether Claude Code uses Git Bash or PowerShell.
@@ -80,13 +80,13 @@ If you uninstall first, `settings.json` keeps pointing at a file that no longer 
 
 ## How it works
 
-- Setup copies the status line script into the plugin's data folder (`~/.claude/plugins/data/professional-statusline-professional-statusline/`) and points `statusLine` at the copy. The plugin's own folder changes with every update, and the data folder does not.
+- Setup copies the plugin's TypeScript source (`plugin/src/`) into the plugin's data folder (`~/.claude/plugins/data/professional-statusline-professional-statusline/src/`) and points `statusLine` at the copy. The plugin's own folder changes with every update, and the data folder does not.
 - A `SessionStart` hook refreshes the copy after the plugin updates. The hook does nothing until you run setup, and it prints nothing.
 - Setup changes only the `statusLine` key. It refuses to write when `settings.json` is not valid JSON.
 
 ## Troubleshooting
 
-- **The status line is blank:** accept the workspace trust dialog, and check that `node --version` works in the terminal where you start Claude Code.
+- **The status line is blank:** accept the workspace trust dialog, and check that `node --version` shows 22.18 or later in the terminal where you start Claude Code.
 - **Another status line shows in one project:** the project's `.claude/settings.json` or `.claude/settings.local.json` sets its own `statusLine`, which takes precedence over your user settings.
 - **The status line did not change after setup:** restart Claude Code.
 
@@ -95,12 +95,9 @@ If you uninstall first, `settings.json` keeps pointing at a file that no longer 
 ```sh
 pnpm install
 pnpm check   # format, lint, typecheck, and tests
-pnpm build   # bundles src/ into plugin/dist/
 ```
 
-Everything that Claude Code installs is in `plugin/`. The rest of the repository holds the TypeScript source, the tests, and the development tools.
-
-`plugin/dist/` is committed, because Claude Code installs the plugin straight from this repository. Run `pnpm build` and commit `plugin/dist/` together with the source changes. CI fails when they differ.
+Everything that Claude Code installs is in `plugin/`, including the TypeScript source in `plugin/src/`. There is no build step: Node.js runs the `.mts` files directly. The rest of the repository holds the tests and the development tools.
 
 To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>/plugin`.
 
