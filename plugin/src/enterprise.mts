@@ -8,16 +8,16 @@
 import { execFileSync, spawn } from "node:child_process";
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { DIM, paint } from "./ansi.ts";
+import { DIM, paint } from "./ansi.mts";
 import {
   colorForRemaining,
   formatMoney,
   formatMonthDay,
   formatUntil,
   remainingFromUsed,
-} from "./format.ts";
-import { num, str } from "./input.ts";
-import { claudeJsonCandidates, configDir } from "./paths.ts";
+} from "./format.mts";
+import { num, str } from "./input.mts";
+import { claudeJsonCandidates, configDir } from "./paths.mts";
 
 const REFRESH_EVERY_SEC = 300;
 const STALE_AFTER_SEC = 1800;

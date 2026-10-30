@@ -8,7 +8,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/dist/sync.mjs",
+              "${CLAUDE_PLUGIN_ROOT}/src/sync.mts",
               "${CLAUDE_PLUGIN_DATA}"
             ],
             "timeout": 10

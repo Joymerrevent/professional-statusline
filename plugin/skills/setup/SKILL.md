@@ -11,17 +11,19 @@ Run the setup script for the action the user asked for. The action is `$ARGUMENT
 
 ## 1. Check Node.js
 
-Run `node --version`. If the command is not found, or the major version is below 20, stop. Tell the user that the status line runs on Node.js 20 or later, and that they need to install it from <https://nodejs.org/> and make sure `node` is on their PATH. Do not try to install Node.js yourself.
+Run `node --version`. The status line is written in TypeScript and needs a Node.js that runs TypeScript files without extra flags: 22.18.0 or later in the 22 line, 23.6.0 or later in the 23 line, or any version from 24 on.
+
+If the command is not found, or the version is older than that, stop. Tell the user that the status line needs Node.js 22.18 or later, and that they need to install it from <https://nodejs.org/> and make sure `node` is on their PATH. Do not try to install Node.js yourself.
 
 ## 2. Run the action
 
-| Action                 | Command                                                                                                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `install`              | `node "${CLAUDE_PLUGIN_ROOT}/dist/setup.mjs" install --data-dir "${CLAUDE_PLUGIN_DATA}"`                                              |
-| `remove`               | `node "${CLAUDE_PLUGIN_ROOT}/dist/setup.mjs" remove --data-dir "${CLAUDE_PLUGIN_DATA}"`                                               |
-| `status`               | `node "${CLAUDE_PLUGIN_ROOT}/dist/setup.mjs" status --data-dir "${CLAUDE_PLUGIN_DATA}"`                                               |
-| `enterprise-spend off` | `node "${CLAUDE_PLUGIN_ROOT}/dist/setup.mjs" enterprise-spend off --data-dir "${CLAUDE_PLUGIN_DATA}"`                                 |
-| `enterprise-spend on`  | Follow section 3 first, then run `node "${CLAUDE_PLUGIN_ROOT}/dist/setup.mjs" enterprise-spend on --data-dir "${CLAUDE_PLUGIN_DATA}"` |
+| Action                 | Command                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `install`              | `node "${CLAUDE_PLUGIN_ROOT}/src/setup.mts" install --data-dir "${CLAUDE_PLUGIN_DATA}"`                                              |
+| `remove`               | `node "${CLAUDE_PLUGIN_ROOT}/src/setup.mts" remove --data-dir "${CLAUDE_PLUGIN_DATA}"`                                               |
+| `status`               | `node "${CLAUDE_PLUGIN_ROOT}/src/setup.mts" status --data-dir "${CLAUDE_PLUGIN_DATA}"`                                               |
+| `enterprise-spend off` | `node "${CLAUDE_PLUGIN_ROOT}/src/setup.mts" enterprise-spend off --data-dir "${CLAUDE_PLUGIN_DATA}"`                                 |
+| `enterprise-spend on`  | Follow section 3 first, then run `node "${CLAUDE_PLUGIN_ROOT}/src/setup.mts" enterprise-spend on --data-dir "${CLAUDE_PLUGIN_DATA}"` |
 
 Run the command exactly as written. Do not edit `settings.json` yourself: the script changes only the `statusLine` key and refuses to write when the file is not valid JSON.
 

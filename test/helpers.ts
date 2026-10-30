@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { after } from "node:test";
 
 export const ROOT = join(import.meta.dirname, "..");
-export const DIST = join(ROOT, "plugin", "dist");
+export const SRC = join(ROOT, "plugin", "src");
 
 export function stripAnsi(text: string): string {
   // eslint-disable-next-line no-control-regex -- ANSI color codes start with the ESC control character.

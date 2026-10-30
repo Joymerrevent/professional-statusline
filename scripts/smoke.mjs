@@ -1,16 +1,16 @@
-// Runs the committed plugin/dist/ files on the oldest supported Node.js, in a throwaway home folder:
+// Runs the shipped plugin/src/ files on the oldest supported Node.js, in a throwaway home folder:
 // setup install -> the installed statusLine command -> the SessionStart sync -> setup remove.
-// CI runs it on Node.js 20 (the runtime job). Exits 1 on the first failure.
+// CI runs it on Node.js 22.18.0 (the runtime job). Exits 1 on the first failure.
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const dist = join(
+const src = join(
   dirname(dirname(fileURLToPath(import.meta.url))),
   "plugin",
-  "dist",
+  "src",
 );
 const home = mkdtempSync(join(tmpdir(), "pro-statusline-smoke-"));
 const config = join(home, ".claude");
@@ -32,7 +32,7 @@ function check(label, ok, detail = "") {
 }
 
 function node(script, args) {
-  return spawnSync(process.execPath, [join(dist, script), ...args], {
+  return spawnSync(process.execPath, [join(src, script), ...args], {
     env,
     cwd: home,
     encoding: "utf8",
@@ -41,7 +41,7 @@ function node(script, args) {
 
 console.log(`Node.js ${process.versions.node} on ${process.platform}`);
 
-const install = node("setup.mjs", ["install", "--data-dir", data]);
+const install = node("setup.mts", ["install", "--data-dir", data]);
 check("setup install", install.status === 0, install.stderr);
 
 const settings = JSON.parse(
@@ -50,7 +50,7 @@ const settings = JSON.parse(
 const command = settings.statusLine?.command ?? "";
 check(
   "statusLine points at the installed copy",
-  /^node ".*\/statusline\.mjs"$/.test(command),
+  /^node ".*\/src\/statusline\.mts"$/.test(command),
   command,
 );
 
@@ -76,6 +76,11 @@ check(
   plain + rendered.stderr,
 );
 check(
+  "Node.js prints no warning while running the TypeScript",
+  rendered.stderr === "",
+  rendered.stderr,
+);
+check(
   "line 1 has the model and effort",
   plain.startsWith("🧠 CI high · 💰$0.00 · +0 -0"),
   plain,
@@ -87,14 +92,14 @@ check(
 );
 console.log(plain);
 
-const sync = node("sync.mjs", [data]);
+const sync = node("sync.mts", [data]);
 check(
   "sync exits 0 and prints nothing",
   sync.status === 0 && sync.stdout === "",
   sync.stdout + sync.stderr,
 );
 
-const remove = node("setup.mjs", ["remove", "--data-dir", data]);
+const remove = node("setup.mts", ["remove", "--data-dir", data]);
 check("setup remove", remove.status === 0, remove.stderr);
 const after = JSON.parse(readFileSync(join(config, "settings.json"), "utf8"));
 check(

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rgb } from "../src/ansi.ts";
-import type { GitInfo } from "../src/git.ts";
-import type { StatusInput } from "../src/input.ts";
-import { effortLabel, render } from "../src/render.ts";
+import { rgb } from "../plugin/src/ansi.mts";
+import type { GitInfo } from "../plugin/src/git.mts";
+import type { StatusInput } from "../plugin/src/input.mts";
+import { effortLabel, render } from "../plugin/src/render.mts";
 import { stripAnsi } from "./helpers.ts";
 
 const NOW = 1_800_000_000;

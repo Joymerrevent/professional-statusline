@@ -25,7 +25,7 @@
 ## 必要なもの
 
 - プラグインに対応した Claude Code
-- [Node.js][nodejs] 20 以上（`node` コマンドが `PATH` から使えること）
+- [Node.js][nodejs] 22.18 以上（`node` コマンドが `PATH` から使えること）。ステータスラインは TypeScript で書いてあり、Node.js 22.18 以上はビルドせずにそのまま動かせます（型を取り除いて実行します）
 - `git`（3 行目でリポジトリの情報を出すため）
 
 macOS・Linux・Windows で動きます。Windows では、Claude Code が Git Bash と PowerShell のどちらを使っていても動きます。
@@ -80,13 +80,13 @@ Claude Code は、claude.ai のチーム・エンタープライズのアカウ�
 
 ## 仕組み
 
-- setup は、ステータスラインのスクリプトをプラグインのデータのフォルダ（`~/.claude/plugins/data/professional-statusline-professional-statusline/`）に写し、`statusLine` から写した方を指します。プラグイン本体のフォルダは更新のたびに変わりますが、データのフォルダは変わりません。
+- setup は、プラグインの TypeScript のソース（`plugin/src/`）をプラグインのデータのフォルダ（`~/.claude/plugins/data/professional-statusline-professional-statusline/src/`）に写し、`statusLine` から写した方を指します。プラグイン本体のフォルダは更新のたびに変わりますが、データのフォルダは変わりません。
 - プラグインの更新の後は、`SessionStart` のフックが写しを新しくします。setup を実行するまでフックは何もせず、何も出力しません。
 - setup が書き換えるのは `statusLine` の項目だけです。`settings.json` が正しい JSON でないときは書き込みません。
 
 ## うまく動かないとき
 
-- **ステータスラインが空になる：** フォルダの信頼の確認を承認してください。Claude Code を起動するターミナルで `node --version` が動くかも確かめてください。
+- **ステータスラインが空になる：** フォルダの信頼の確認を承認してください。Claude Code を起動するターミナルで、`node --version` が 22.18 以上を示すかも確かめてください。
 - **特定のプロジェクトでだけ別のステータスラインが出る：** プロジェクトの `.claude/settings.json` か `.claude/settings.local.json` が `statusLine` を決めています。プロジェクトの設定はユーザー設定より優先されます。
 - **setup の後も表示が変わらない：** Claude Code を再起動してください。
 
@@ -95,12 +95,9 @@ Claude Code は、claude.ai のチーム・エンタープライズのアカウ�
 ```sh
 pnpm install
 pnpm check   # 整形の確認・lint・型検査・テスト
-pnpm build   # src/ を plugin/dist/ にまとめる
 ```
 
-Claude Code がインストールするものは、すべて `plugin/` に入っています。それ以外は、TypeScript のソース・テスト・開発用の道具です。
-
-Claude Code はプラグインをこのリポジトリから直接インストールするので、`plugin/dist/` もコミットしています。ソースを変えたら `pnpm build` を実行し、`plugin/dist/` も一緒にコミットしてください。食い違うと CI が落ちます。
+Claude Code がインストールするものは、`plugin/src/` の TypeScript のソースも含めて、すべて `plugin/` に入っています。ビルドはしません。Node.js が `.mts` のファイルをそのまま動かします。それ以外は、テストと開発用の道具です。
 
 手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>/plugin` で Claude Code を起動します。
 

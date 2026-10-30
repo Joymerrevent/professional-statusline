@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { GREEN, RED, YELLOW } from "../src/ansi.ts";
-import { nextMonthlyReset } from "../src/enterprise.ts";
+import { GREEN, RED, YELLOW } from "../plugin/src/ansi.mts";
+import { nextMonthlyReset } from "../plugin/src/enterprise.mts";
 import {
   colorForRemaining,
   formatMoney,
   formatUntil,
   remainingFromUsed,
-} from "../src/format.ts";
+} from "../plugin/src/format.mts";
 
 test("formatUntil picks days, hours, or minutes", () => {
   assert.equal(formatUntil(1000 + 3 * 86400 + 4 * 3600 + 59, 1000), "3d4h");

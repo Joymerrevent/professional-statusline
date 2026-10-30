@@ -8,8 +8,8 @@ import {
   YELLOW,
   paint,
   rgb,
-} from "./ansi.ts";
-import { contextRemaining } from "./context.ts";
+} from "./ansi.mts";
+import { contextRemaining } from "./context.mts";
 import {
   clampPercent,
   colorForRemaining,
@@ -17,9 +17,9 @@ import {
   formatMonthDay,
   formatUntil,
   remainingFromUsed,
-} from "./format.ts";
-import type { GitInfo } from "./git.ts";
-import { num, str, type RateWindow, type StatusInput } from "./input.ts";
+} from "./format.mts";
+import type { GitInfo } from "./git.mts";
+import { num, str, type RateWindow, type StatusInput } from "./input.mts";
 
 export interface RenderContext {
   nowSec: number;

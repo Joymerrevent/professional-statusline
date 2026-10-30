@@ -1,11 +1,12 @@
 // Installs, removes, and reports the status line. `/professional-statusline:setup` runs this file.
 //
-//   node dist/setup.mjs install            --data-dir <plugin data folder>
-//   node dist/setup.mjs remove             --data-dir <plugin data folder>
-//   node dist/setup.mjs status             --data-dir <plugin data folder>
-//   node dist/setup.mjs enterprise-spend on|off --data-dir <plugin data folder>
+//   node src/setup.mts install            --data-dir <plugin data folder>
+//   node src/setup.mts remove             --data-dir <plugin data folder>
+//   node src/setup.mts status             --data-dir <plugin data folder>
+//   node src/setup.mts enterprise-spend on|off --data-dir <plugin data folder>
 //
 // settings.json is changed only when it parses as a JSON object. Otherwise nothing is written.
+// Node.js runs this file only when it can run TypeScript (22.18 or later), so no version check is needed here.
 
 import {
   existsSync,
@@ -21,18 +22,20 @@ import {
   isTeamOrEnterprise,
   readConfig,
   type PluginConfig,
-} from "./enterprise.ts";
+} from "./enterprise.mts";
 import {
-  bundledScript,
-  copyScript,
-  installedScript,
+  copySource,
+  ENTRY_NAME,
+  installedDir,
+  installedEntry,
+  LEGACY_ENTRY_NAME,
+  legacyEntry,
   pluginRootFrom,
-  sameContent,
-  SCRIPT_NAME,
-} from "./install.ts";
-import { configDir, toForwardSlashes } from "./paths.ts";
+  sameSource,
+  sourceDir,
+} from "./install.mts";
+import { configDir, toForwardSlashes } from "./paths.mts";
 
-const MIN_NODE_MAJOR = 20;
 const REFRESH_INTERVAL_SEC = 10;
 
 type Settings = Record<string, unknown>;
@@ -72,13 +75,17 @@ function writeSettings(file: SettingsFile): void {
   renameSync(temporary, file.path);
 }
 
+// This version's command, or the one 0.1.0 wrote (<data>/statusline.mjs).
 function isOurStatusLine(value: unknown): boolean {
   const text = JSON.stringify(value ?? null);
-  return text.includes("professional-statusline") && text.includes(SCRIPT_NAME);
+  return (
+    text.includes("professional-statusline") &&
+    (text.includes(ENTRY_NAME) || text.includes(LEGACY_ENTRY_NAME))
+  );
 }
 
 function statusLineCommand(dataDir: string): string {
-  return `node "${toForwardSlashes(join(dataDir, SCRIPT_NAME))}"`;
+  return `node "${toForwardSlashes(installedEntry(dataDir))}"`;
 }
 
 function backupPath(dataDir: string): string {
@@ -114,14 +121,8 @@ function install(
   settingsPath: string,
   log: (line: string) => void,
 ): void {
-  const major = Number(process.versions.node.split(".")[0]);
-  if (major < MIN_NODE_MAJOR) {
-    throw new SetupError(
-      `Node.js ${MIN_NODE_MAJOR} or later is required. This is Node.js ${process.versions.node}.`,
-    );
-  }
   const settings = readSettings(settingsPath);
-  copyScript(pluginRoot, dataDir);
+  copySource(pluginRoot, dataDir);
 
   const previous = settings.data["statusLine"];
   if (!isOurStatusLine(previous)) {
@@ -136,6 +137,8 @@ function install(
     refreshInterval: REFRESH_INTERVAL_SEC,
   };
   writeSettings(settings);
+  // settings.json no longer points at the 0.1.0 entry, so remove it.
+  rmSync(legacyEntry(dataDir), { force: true });
 
   log(`Installed the status line in ${settingsPath}.`);
   if (previous !== undefined && !isOurStatusLine(previous)) {
@@ -178,12 +181,13 @@ function remove(
   writeSettings(settings);
 
   for (const path of [
-    installedScript(dataDir),
+    installedDir(dataDir),
+    legacyEntry(dataDir),
     backupPath(dataDir),
     files(dataDir).cache,
     files(dataDir).stamp,
   ]) {
-    rmSync(path, { force: true });
+    rmSync(path, { recursive: true, force: true });
   }
   log(
     previous === null
@@ -199,7 +203,7 @@ function status(
   log: (line: string) => void,
 ): void {
   const current = readSettings(settingsPath).data["statusLine"];
-  const installed = existsSync(installedScript(dataDir));
+  const installed = existsSync(installedEntry(dataDir));
   log(`settings.json: ${settingsPath}`);
   log(
     `statusLine: ${current === undefined ? "(not set)" : JSON.stringify(current)}`,
@@ -208,11 +212,11 @@ function status(
     `This plugin's status line is ${isOurStatusLine(current) ? "active" : "not active"}.`,
   );
   log(
-    `Installed script: ${installed ? installedScript(dataDir) : "(not installed)"}`,
+    `Installed script: ${installed ? installedEntry(dataDir) : "(not installed)"}`,
   );
   if (installed)
     log(
-      `Up to date with the plugin: ${sameContent(bundledScript(pluginRoot), installedScript(dataDir)) ? "yes" : "no"}`,
+      `Up to date with the plugin: ${sameSource(sourceDir(pluginRoot), installedDir(dataDir)) ? "yes" : "no"}`,
     );
   log(
     `Enterprise spend display: ${readConfig(dataDir).enterpriseSpend === true ? "on" : "off"}`,

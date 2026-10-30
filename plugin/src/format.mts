@@ -1,4 +1,4 @@
-import { GREEN, RED, YELLOW } from "./ansi.ts";
+import { GREEN, RED, YELLOW } from "./ansi.mts";
 
 // Remaining percentage -> color. More is better: >= 50 green, >= 20 yellow, otherwise red.
 export function colorForRemaining(percent: number): string {

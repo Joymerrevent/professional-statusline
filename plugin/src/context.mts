@@ -1,6 +1,6 @@
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import { clampPercent, remainingFromUsed } from "./format.ts";
-import { num, type StatusInput } from "./input.ts";
+import { clampPercent, remainingFromUsed } from "./format.mts";
+import { num, type StatusInput } from "./input.mts";
 
 const DEFAULT_WINDOW = 200_000;
 // Read only the end of the transcript. The last usage record is near the end, and transcripts grow large.
