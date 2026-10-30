@@ -1,0 +1,63 @@
+{
+  "name": "professional-statusline",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A three-line status line for Claude Code: model and effort, context and usage limits, and where you are in git.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/build.mjs && node --test \"test/**/*.test.ts\"",
+    "lint:ts": "eslint .",
+    "lint:ts:fix": "eslint . --fix",
+    "format:ts": "prettier --write \"**/*.{ts,tsx,cts,mts,js,jsx,cjs,mjs,json}\"",
+    "format:ts:check": "prettier --check \"**/*.{ts,tsx,cts,mts,js,jsx,cjs,mjs,json}\"",
+    "lint": "pnpm run \"/^lint:(?!fix$)[^:]+$/\"",
+    "lint:fix": "pnpm run \"/^lint:[^:]+:fix$/\"",
+    "format": "pnpm run \"/^format:(?!check$)[^:]+$/\"",
+    "format:check": "pnpm run \"/^format:[^:]+:check$/\"",
+    "lint:md": "markdownlint-cli2",
+    "lint:md:fix": "markdownlint-cli2 --fix",
+    "format:md": "prettier --write \"**/*.md\"",
+    "format:md:check": "prettier --check \"**/*.md\"",
+    "check": "pnpm run --if-present format:check && pnpm run --if-present lint && pnpm run --if-present typecheck && pnpm run --if-present test",
+    "prepare": "simple-git-hooks"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "lint-staged": "^17.6.0",
+    "markdownlint-cli2": "^0.24.0",
+    "prettier": "^3.9.10",
+    "simple-git-hooks": "^2.14.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged",
+    "commit-msg": "pnpm exec commitlint --edit \"$1\""
+  },
+  "lint-staged": {
+    "*.{ts,tsx,cts,mts,js,jsx,cjs,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix",
+      "prettier --write"
+    ]
+  }
+}

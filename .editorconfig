@@ -1,0 +1,25 @@
+# EditorConfig（エディタ間の整形の土台を揃える） https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Markdown の行末スペースは改行の意味を持つため、末尾空白の除去はしない
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
+
+# 次のマーカー行より下はプロジェクト固有の上書き。editorconfig レシピの apply で保持される
+# （マーカー行までの部分はレシピの正本で上書きされる）。ディレクトリ別の設定も、
+# サブディレクトリに .editorconfig を置かず、root 基準の glob でマーカー行の下に書く。
+# --- local overrides ---
+# 例:
+# [public/**]
+# insert_final_newline = false
