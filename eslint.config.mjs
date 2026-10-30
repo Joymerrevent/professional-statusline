@@ -7,7 +7,8 @@ import eslintConfigPrettier from "eslint-config-prettier";
 // 型情報を使うルール（no-floating-promises 等）を有効化するため type-checked を採用。
 // ※ 型情報ありの lint には対象プロジェクトの tsconfig.json が必要。
 export default tseslint.config(
-  { ignores: ["dist", "build", "coverage"] },
+  // どの深さの成果物も外す（"dist" だけだと直下にしか効かず、plugin/dist/ のような入れ子を検査してしまう）
+  { ignores: ["**/dist", "**/build", "**/coverage"] },
 
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

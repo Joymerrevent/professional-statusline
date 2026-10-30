@@ -1,0 +1,28 @@
+# GitHub Actions のバージョン更新を自動 PR 化する（dependabot レシピが配布）。
+# 新バージョンの検知 → PR 作成 → CI 検証を GitHub 側で完結させ、
+# ランナー環境の強制移行（例: Node.js 20 廃止）にも先回りで気づけるようにする。
+# npm 依存も監視する変種は files-npm/（`just apply-npm`）。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # サプライチェーン対策の熟成期間。公開直後の版は PR にしない（悪性リリースが
+    # 発見・削除されるまでの時間を稼ぐ）。SHA ピンを付け替えるのは Dependabot 自身なので、
+    # タグの付け替え攻撃には SHA ピンだけでは足りない。github-actions は semver 別の
+    # 日数指定に非対応のため default-days のみ。
+    cooldown:
+      default-days: 7
+    # minor/patch は 1 つの PR にまとめてノイズを減らす。major はランタイム変更や
+    # 入力の破壊的変更を伴うためグループから外し個別 PR で受ける（切り戻し単位を小さく保つ）。
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # コミットメッセージを conventional commits（ci プレフィックス）に揃える
+    commit-message:
+      prefix: "ci"

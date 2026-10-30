@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+# 既定は読み取りのみ。書き込み等が要るジョブだけ job 単位で足す（最小権限）。
+permissions:
+  contents: read
+
+# 同一 ref の重複実行は打ち切る（必要なのは後発 push の結果だけ）。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# static（format/lint/typecheck）/ test / build を別ジョブで同時実行し、集約ゲート ci で束ねる。
+# branch protection の必須チェックは ci 1 つだけにする（ジョブを増減しても contexts は
+# ["ci"] のまま。小規模で 1 ジョブに畳む場合の手順は recipe.md）。
+# アクションは SHA ピン＋バージョンコメント（タグの付け替え対策。更新は Dependabot が行う）。
+jobs:
+  # 変更が docs だけか判定する。docs-only の PR は重い test / build を skip し static だけ走らせる。
+  # 必須チェック（ci）を含むワークフローに on.*.paths-ignore は使わない: ワークフローごと起動せず
+  # 必須チェックが報告されないため、PR が "Expected — Waiting for status to be reported" で詰む。
+  # ワークフローは常に起動し、ジョブ単位で skip する（skip は ci-gate の skippable で許可）。
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # pull_request では変更ファイル一覧を API で取るため
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          # "every": ファイルが全パターンを満たすときだけ該当（= 非 md かつ 非 docs/）。
+          # 既定の "some" だと否定パターンの OR で全ファイルが該当し、常に true になるため必須。
+          predicate-quantifier: "every"
+          filters: |
+            code:
+              - "!**/*.md"
+              - "!docs/**"
+
+  # 軽い静的チェックは 1 ジョブにまとめて install 回数を抑える。docs-only でも常に走る。
+  static:
+    name: static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # プロジェクトの package.json に無いスクリプトの行は削る。
+      # 2 行目以降は前が落ちても走らせる。1 回の CI で直すべき箇所を全部出すため
+      # （片方ずつ直して push を繰り返す状況を避ける）。cancelled() は除外する。
+      - run: pnpm format:check
+      - run: pnpm lint
+        if: ${{ !cancelled() }}
+      - run: pnpm typecheck
+        if: ${{ !cancelled() }}
+      # （任意）本番依存の high 以上の既知脆弱性だけで落とす狭いゲート。
+      # 新しい advisory の公開で PR と無関係に赤くなりうるため、入れるかはプロジェクトで判断する。
+      # - run: pnpm audit --prod --audit-level high
+      #   if: ${{ !cancelled() }}
+
+  # ステータスラインは Windows でも動かすので、3 つの OS でテストする。
+  test:
+    name: test (${{ matrix.os }})
+    needs: changes
+    # skip は「docs-only と明示判定された（false）」ときだけ。出力が空など想定外は走らせる側へ倒す。
+    if: needs.changes.outputs.code != 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm test
+
+  # 利用者の手元で動く最も古い Node.js（src/setup.ts の MIN_NODE_MAJOR）で、同梱の plugin/dist/ を動かす。
+  # テストは TypeScript のまま Node.js 24 で動かすため、古い Node.js ではこのスモークテストだけを走らせる。
+  runtime:
+    name: runtime (node 20, ${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.code != 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - run: node scripts/smoke.mjs
+
+  build:
+    name: build
+    needs: changes
+    # skip は「docs-only と明示判定された（false）」ときだけ。出力が空など想定外は走らせる側へ倒す。
+    if: needs.changes.outputs.code != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      # plugin/dist/ はリポジトリから直接インストールされるのでコミットしている。ソースと食い違ったら落とす。
+      - name: plugin/dist/ がソースと一致する
+        run: git diff --exit-code -- plugin/dist || { echo "::error::plugin/dist/ is out of date. Run pnpm build and commit plugin/dist/."; exit 1; }
+
+  # 集約ゲート: branch protection の必須チェックはこの ci だけにする。
+  # ジョブを足したら needs に 1 行足すだけ。足し忘れは ci-gate のメタチェックが exit 1 で知らせる。
+  ci:
+    needs: [changes, static, test, runtime, build]
+    # 依存ジョブが落ちても必ず走らせる。skip されると branch protection が
+    # 「成功」とみなしてゲートが効かないため if: always() は必須。
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # ci-gate のメタチェックがワークフローファイルを読むため checkout は必須
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/ci-gate
+        with:
+          needs: ${{ toJSON(needs) }}
+          # docs-only で意図的に skip するジョブ。changes が success のときだけ skip を許す
+          # （changes が落ちて連鎖 skip した場合は changes 自身の失敗でゲートが落ちる）。
+          skippable: test runtime build
