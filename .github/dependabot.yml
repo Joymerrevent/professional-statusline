@@ -5,7 +5,12 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" だけだと .github/workflows/ と直下の action.yml しか見ず、.github/actions/<名前>/action.yml の
+    # composite action（ci-node-pnpm の setup 等）の SHA ピンが古いまま残る。glob で各フォルダを足す
+    # （グループはフォルダをまたいで 1 つの PR にまとまる）。
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "weekly"
     # サプライチェーン対策の熟成期間。公開直後の版は PR にしない（悪性リリースが
