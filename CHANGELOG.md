@@ -25,5 +25,5 @@ The format is based on [Keep a Changelog][keep-a-changelog], and this project ad
 
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
-[0.2.0]: https://github.com/Joymerrevent/professional-statusline/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/Joymerrevent/professional-statusline/tree/v0.1.0
+[0.2.0]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.1.0...professional-statusline--v0.2.0
+[0.1.0]: https://github.com/Joymerrevent/professional-statusline/tree/professional-statusline--v0.1.0

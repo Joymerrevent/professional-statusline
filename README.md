@@ -98,7 +98,7 @@ Everything that Claude Code installs is in `plugin/`, including the TypeScript s
 
 To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>/plugin`.
 
-To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json` (and in `package.json`) and add an entry to the [changelog][changelog]. Installed copies stay on their version until it changes. After the change is on `main`, tag the release (`vX.Y.Z`) and publish it on GitHub.
+To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json` (and in `package.json`) and add an entry to the [changelog][changelog]. Installed copies stay on their version until it changes. After the change is on `main`, tag it with `claude plugin tag plugin --push`, which creates the `professional-statusline--vX.Y.Z` tag that Claude Code uses for plugin versions, and publish a GitHub release from that tag.
 
 ## License
 

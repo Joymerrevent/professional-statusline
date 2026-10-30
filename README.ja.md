@@ -98,7 +98,7 @@ Claude Code がインストールするものは、`plugin/src/` の TypeScript 
 
 手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>/plugin` で Claude Code を起動します。
 
-変更を利用者に届けるときは、`plugin/.claude-plugin/plugin.json`（と `package.json`）の `version` を上げ、[変更の履歴][changelog]に書き足します。インストール済みの写しは、`version` が変わるまで同じ版のままです。変更が `main` に入ったら、リリースのタグ（`vX.Y.Z`）を付けて GitHub で公開します。
+変更を利用者に届けるときは、`plugin/.claude-plugin/plugin.json`（と `package.json`）の `version` を上げ、[変更の履歴][changelog]に書き足します。インストール済みの写しは、`version` が変わるまで同じ版のままです。変更が `main` に入ったら、`claude plugin tag plugin --push` でタグを付けます。Claude Code がプラグインの版に使う `professional-statusline--vX.Y.Z` の形のタグができるので、そのタグから GitHub の Release を作って公開します。
 
 ## ライセンス
 
