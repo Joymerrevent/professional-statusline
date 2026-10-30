@@ -1,6 +1,6 @@
 // Entry point of the status line. Claude Code runs it with the session JSON on stdin
-// and shows what it prints. Installed by `/professional-statusline:setup` into the plugin's data folder,
-// next to its config.json and cache files.
+// and shows what it prints. `/professional-statusline:setup` copies plugin/src/ to <data>/src/,
+// and the data folder one level up holds config.json and the cache files.
 
 import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -11,13 +11,13 @@ import {
   readConfig,
   refreshUsage,
   scheduleRefresh,
-} from "./enterprise.ts";
-import { readGitInfo } from "./git.ts";
-import { parseInput } from "./input.ts";
-import { render, workingDirectory } from "./render.ts";
+} from "./enterprise.mts";
+import { readGitInfo } from "./git.mts";
+import { parseInput } from "./input.mts";
+import { render, workingDirectory } from "./render.mts";
 
 const scriptPath = fileURLToPath(import.meta.url);
-const dataDir = dirname(scriptPath);
+const dataDir = dirname(dirname(scriptPath));
 
 async function main(): Promise<void> {
   if (process.argv.includes("--refresh-usage")) {

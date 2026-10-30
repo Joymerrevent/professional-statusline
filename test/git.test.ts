@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { readGitInfo } from "../src/git.ts";
+import { readGitInfo } from "../plugin/src/git.mts";
 import { tempDir } from "./helpers.ts";
 
 const git = (cwd: string, ...args: string[]) =>

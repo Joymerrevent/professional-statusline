@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { contextRemaining, lastUsageTokens } from "../src/context.ts";
+import { contextRemaining, lastUsageTokens } from "../plugin/src/context.mts";
 import { tempDir } from "./helpers.ts";
 
 const dir = tempDir();

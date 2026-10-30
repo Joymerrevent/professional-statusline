@@ -10,7 +10,7 @@ import {
   refreshUsage,
   scheduleRefresh,
   type RefreshDeps,
-} from "../src/enterprise.ts";
+} from "../plugin/src/enterprise.mts";
 import { stripAnsi, tempDir } from "./helpers.ts";
 
 const NOW = Date.UTC(2026, 9, 30, 3, 0) / 1000;

@@ -1,21 +1,22 @@
-// Runs the bundled files in plugin/dist/ the way Claude Code and the setup skill run them.
+// Runs the shipped files in plugin/src/ the way Claude Code and the setup skill run them.
 // Every run uses an isolated home folder, so the real settings.json and credentials are never touched.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
-  copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { DIST, isolatedEnv, runNode, stripAnsi, tempDir } from "./helpers.ts";
+import { SRC, isolatedEnv, runNode, stripAnsi, tempDir } from "./helpers.ts";
 
-const SETUP = join(DIST, "setup.mjs");
-const SYNC = join(DIST, "sync.mjs");
-const STATUSLINE = join(DIST, "statusline.mjs");
+const SETUP = join(SRC, "setup.mts");
+const SYNC = join(SRC, "sync.mts");
+const STATUSLINE = join(SRC, "statusline.mts");
 
 function sandbox() {
   const home = tempDir();
@@ -35,11 +36,14 @@ function sandbox() {
   return { home, data, settings, env, setup, readSettings };
 }
 
-test("install writes statusLine, copies the script, and the command renders", () => {
+test("install writes statusLine, copies plugin/src, and the command renders", () => {
   const s = sandbox();
   const result = s.setup("install");
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(existsSync(join(s.data, "statusline.mjs")), true);
+  assert.deepEqual(
+    readdirSync(join(s.data, "src")).sort(),
+    readdirSync(SRC).sort(),
+  );
   const statusLine = s.readSettings()["statusLine"] as {
     type: string;
     command: string;
@@ -47,7 +51,7 @@ test("install writes statusLine, copies the script, and the command renders", ()
   };
   assert.equal(statusLine.type, "command");
   assert.equal(statusLine.refreshInterval, 10);
-  assert.match(statusLine.command, /^node ".*\/statusline\.mjs"$/);
+  assert.match(statusLine.command, /^node ".*\/src\/statusline\.mts"$/);
   assert.equal(statusLine.command.includes("\\"), false);
 
   // Run the command through a shell, as Claude Code does.
@@ -62,9 +66,26 @@ test("install writes statusLine, copies the script, and the command renders", ()
     encoding: "utf8",
   });
   assert.equal(rendered.status, 0, rendered.stderr);
+  // Node.js must run the TypeScript without warnings (22.18 and later print none).
+  assert.equal(rendered.stderr, "");
   assert.match(
     stripAnsi(rendered.stdout),
     /^🧠 Opus 5\.5 high · 💰\$0\.00 · \+0 -0\n💭 ctx --\n📁 /,
+  );
+});
+
+test("a second install swaps the copy and leaves no temporary folder", () => {
+  const s = sandbox();
+  assert.equal(s.setup("install").status, 0);
+  writeFileSync(join(s.data, "src", "render.mts"), "// changed\n");
+  assert.equal(s.setup("install").status, 0);
+  assert.equal(
+    readFileSync(join(s.data, "src", "render.mts"), "utf8"),
+    readFileSync(join(SRC, "render.mts"), "utf8"),
+  );
+  assert.deepEqual(
+    readdirSync(s.data).filter((name) => name.startsWith("src")),
+    ["src"],
   );
 });
 
@@ -86,7 +107,7 @@ test("install keeps other settings and the indentation, and remove restores the 
   const removed = s.setup("remove");
   assert.equal(removed.status, 0, removed.stderr);
   assert.deepEqual(s.readSettings(), { model: "opus", statusLine: previous });
-  assert.equal(existsSync(join(s.data, "statusline.mjs")), false);
+  assert.equal(existsSync(join(s.data, "src")), false);
 });
 
 test("remove deletes statusLine when there was none, and leaves a foreign statusLine alone", () => {
@@ -168,21 +189,58 @@ test("sync updates an installed copy, prints nothing, and does nothing before in
   assert.equal(existsSync(s.data), false);
 
   assert.equal(s.setup("install").status, 0);
-  writeFileSync(join(s.data, "statusline.mjs"), "// an older version\n");
+  writeFileSync(join(s.data, "src", "statusline.mts"), "// an older version\n");
   const after = runNode(SYNC, [s.data], { env: s.env });
   assert.equal(after.status, 0);
   assert.equal(after.stdout, "");
   assert.equal(
-    readFileSync(join(s.data, "statusline.mjs"), "utf8"),
+    readFileSync(join(s.data, "src", "statusline.mts"), "utf8"),
     readFileSync(STATUSLINE, "utf8"),
   );
+});
+
+test("sync relinks a 0.1.0 install, and install then moves it to the new command", () => {
+  const s = sandbox();
+  // 0.1.0 installed one bundled file at <data>/statusline.mjs and pointed settings.json at it.
+  mkdirSync(s.data, { recursive: true });
+  const legacy = join(s.data, "statusline.mjs");
+  writeFileSync(legacy, 'process.stdout.write("0.1.0");\n');
+  const legacyCommand = `node "${legacy.replaceAll("\\", "/")}"`;
+  mkdirSync(join(s.home, ".claude"), { recursive: true });
+  writeFileSync(
+    s.settings,
+    JSON.stringify({ statusLine: { type: "command", command: legacyCommand } }),
+  );
+
+  const synced = runNode(SYNC, [s.data], { env: s.env });
+  assert.equal(synced.status, 0);
+  assert.equal(synced.stdout, "");
+  assert.equal(
+    readFileSync(legacy, "utf8"),
+    'import "./src/statusline.mts";\n',
+  );
+  const rendered = spawnSync(legacyCommand, {
+    shell: true,
+    input: JSON.stringify({ model: { display_name: "Opus 5.5" } }),
+    env: s.env,
+    encoding: "utf8",
+  });
+  assert.equal(rendered.status, 0, rendered.stderr);
+  assert.match(stripAnsi(rendered.stdout), /^🧠 Opus 5\.5 · /);
+
+  assert.match(s.setup("status").stdout, /is active/);
+  assert.equal(s.setup("install").status, 0);
+  const command = (s.readSettings()["statusLine"] as { command: string })
+    .command;
+  assert.match(command, /\/src\/statusline\.mts"$/);
+  assert.equal(existsSync(legacy), false);
 });
 
 test("the installed status line shows the opt-in enterprise spend from its own data folder", () => {
   const s = sandbox();
   mkdirSync(s.data, { recursive: true });
-  const script = join(s.data, "statusline.mjs");
-  copyFileSync(STATUSLINE, script);
+  cpSync(SRC, join(s.data, "src"), { recursive: true });
+  const script = join(s.data, "src", "statusline.mts");
   writeFileSync(
     join(s.home, ".claude.json"),
     JSON.stringify({ oauthAccount: { organizationType: "claude_enterprise" } }),

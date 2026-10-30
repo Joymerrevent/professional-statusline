@@ -14,12 +14,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# static（format/lint/typecheck）/ test / build を別ジョブで同時実行し、集約ゲート ci で束ねる。
+# static（format/lint/typecheck）/ test / runtime を別ジョブで同時実行し、集約ゲート ci で束ねる。
 # branch protection の必須チェックは ci 1 つだけにする（ジョブを増減しても contexts は
 # ["ci"] のまま。小規模で 1 ジョブに畳む場合の手順は recipe.md）。
 # アクションは SHA ピン＋バージョンコメント（タグの付け替え対策。更新は Dependabot が行う）。
 jobs:
-  # 変更が docs だけか判定する。docs-only の PR は重い test / build を skip し static だけ走らせる。
+  # 変更が docs だけか判定する。docs-only の PR は重い test / runtime を skip し static だけ走らせる。
   # 必須チェック（ci）を含むワークフローに on.*.paths-ignore は使わない: ワークフローごと起動せず
   # 必須チェックが報告されないため、PR が "Expected — Waiting for status to be reported" で詰む。
   # ワークフローは常に起動し、ジョブ単位で skip する（skip は ci-gate の skippable で許可）。
@@ -80,42 +80,30 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm test
 
-  # 利用者の手元で動く最も古い Node.js（src/setup.ts の MIN_NODE_MAJOR）で、同梱の plugin/dist/ を動かす。
-  # テストは TypeScript のまま Node.js 24 で動かすため、古い Node.js ではこのスモークテストだけを走らせる。
+  # 利用者の手元で動く最も古い Node.js（plugin/skills/setup/SKILL.md の下限）で、テスト一式と
+  # plugin/src/ のスモークテストを走らせる。TypeScript をフラグ無しで動かせるのは 22.18.0 から。
+  # テストは Node.js の組み込みだけを使うので、依存を入れずに動く。下限はパッチ版まで書く。
   runtime:
-    name: runtime (node 20, ${{ matrix.os }})
+    name: runtime (node 22.18.0, ${{ matrix.os }})
     needs: changes
     if: needs.changes.outputs.code != 'false'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 22.18.0
+      - run: node --test "test/**/*.test.ts"
       - run: node scripts/smoke.mjs
-
-  build:
-    name: build
-    needs: changes
-    # skip は「docs-only と明示判定された（false）」ときだけ。出力が空など想定外は走らせる側へ倒す。
-    if: needs.changes.outputs.code != 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup
-      - run: pnpm build
-      # plugin/dist/ はリポジトリから直接インストールされるのでコミットしている。ソースと食い違ったら落とす。
-      - name: plugin/dist/ がソースと一致する
-        run: git diff --exit-code -- plugin/dist || { echo "::error::plugin/dist/ is out of date. Run pnpm build and commit plugin/dist/."; exit 1; }
 
   # 集約ゲート: branch protection の必須チェックはこの ci だけにする。
   # ジョブを足したら needs に 1 行足すだけ。足し忘れは ci-gate のメタチェックが exit 1 で知らせる。
   ci:
-    needs: [changes, static, test, runtime, build]
+    needs: [changes, static, test, runtime]
     # 依存ジョブが落ちても必ず走らせる。skip されると branch protection が
     # 「成功」とみなしてゲートが効かないため if: always() は必須。
     if: always()
@@ -128,4 +116,4 @@ jobs:
           needs: ${{ toJSON(needs) }}
           # docs-only で意図的に skip するジョブ。changes が success のときだけ skip を許す
           # （changes が落ちて連鎖 skip した場合は changes 自身の失敗でゲートが落ちる）。
-          skippable: test runtime build
+          skippable: test runtime
