@@ -35,7 +35,7 @@ macOS, Linux, and Windows are supported. On Windows, the status line works wheth
 Run these in Claude Code:
 
 ```text
-/plugin marketplace add shiromoto-jun/professional-statusline
+/plugin marketplace add Joymerrevent/professional-statusline
 /plugin install professional-statusline@professional-statusline
 /professional-statusline:setup
 ```
@@ -95,12 +95,14 @@ If you uninstall first, `settings.json` keeps pointing at a file that no longer 
 ```sh
 pnpm install
 pnpm check   # format, lint, typecheck, and tests
-pnpm build   # bundles src/ into dist/
+pnpm build   # bundles src/ into plugin/dist/
 ```
 
-`dist/` is committed, because Claude Code installs the plugin straight from this repository. Run `pnpm build` and commit `dist/` together with the source changes. CI fails when they differ.
+Everything that Claude Code installs is in `plugin/`. The rest of the repository holds the TypeScript source, the tests, and the development tools.
 
-To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>`.
+`plugin/dist/` is committed, because Claude Code installs the plugin straight from this repository. Run `pnpm build` and commit `plugin/dist/` together with the source changes. CI fails when they differ.
+
+To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>/plugin`.
 
 ## License
 

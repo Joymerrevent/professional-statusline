@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "description": "A three-line status line: model and effort in Claude Code's own colors, context and usage limits with reset countdowns, and your place in git. Run /professional-statusline:setup after installing.",
   "author": {
-    "name": "JunShiromoto"
+    "name": "Joymerrevent",
+    "url": "https://joymerrevent.com/"
   },
   "license": "MIT",
   "keywords": [

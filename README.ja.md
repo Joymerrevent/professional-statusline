@@ -35,7 +35,7 @@ macOS・Linux・Windows で動きます。Windows では、Claude Code が Git B
 Claude Code で次を実行します。
 
 ```text
-/plugin marketplace add shiromoto-jun/professional-statusline
+/plugin marketplace add Joymerrevent/professional-statusline
 /plugin install professional-statusline@professional-statusline
 /professional-statusline:setup
 ```
@@ -95,12 +95,14 @@ Claude Code は、claude.ai のチーム・エンタープライズのアカウ�
 ```sh
 pnpm install
 pnpm check   # 整形の確認・lint・型検査・テスト
-pnpm build   # src/ を dist/ にまとめる
+pnpm build   # src/ を plugin/dist/ にまとめる
 ```
 
-Claude Code はプラグインをこのリポジトリから直接インストールするので、`dist/` もコミットしています。ソースを変えたら `pnpm build` を実行し、`dist/` も一緒にコミットしてください。食い違うと CI が落ちます。
+Claude Code がインストールするものは、すべて `plugin/` に入っています。それ以外は、TypeScript のソース・テスト・開発用の道具です。
 
-手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>` で Claude Code を起動します。
+Claude Code はプラグインをこのリポジトリから直接インストールするので、`plugin/dist/` もコミットしています。ソースを変えたら `pnpm build` を実行し、`plugin/dist/` も一緒にコミットしてください。食い違うと CI が落ちます。
+
+手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>/plugin` で Claude Code を起動します。
 
 ## ライセンス
 

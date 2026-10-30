@@ -1,4 +1,4 @@
-// Runs the committed dist/ files on the oldest supported Node.js, in a throwaway home folder:
+// Runs the committed plugin/dist/ files on the oldest supported Node.js, in a throwaway home folder:
 // setup install -> the installed statusLine command -> the SessionStart sync -> setup remove.
 // CI runs it on Node.js 20 (the runtime job). Exits 1 on the first failure.
 import { spawnSync } from "node:child_process";
@@ -9,7 +9,11 @@ import { dirname, join } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const dist = join(dirname(dirname(fileURLToPath(import.meta.url))), "dist");
+const dist = join(
+  dirname(dirname(fileURLToPath(import.meta.url))),
+  "plugin",
+  "dist",
+);
 const home = mkdtempSync(join(tmpdir(), "pro-statusline-smoke-"));
 const config = join(home, ".claude");
 const data = join(config, "plugins", "data", "professional-statusline-smoke");

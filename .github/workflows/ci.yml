@@ -80,7 +80,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm test
 
-  # 利用者の手元で動く最も古い Node.js（src/setup.ts の MIN_NODE_MAJOR）で、同梱の dist/ を動かす。
+  # 利用者の手元で動く最も古い Node.js（src/setup.ts の MIN_NODE_MAJOR）で、同梱の plugin/dist/ を動かす。
   # テストは TypeScript のまま Node.js 24 で動かすため、古い Node.js ではこのスモークテストだけを走らせる。
   runtime:
     name: runtime (node 20, ${{ matrix.os }})
@@ -108,9 +108,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm build
-      # dist/ はリポジトリから直接インストールされるのでコミットしている。ソースと食い違ったら落とす。
-      - name: dist/ がソースと一致する
-        run: git diff --exit-code -- dist || { echo "::error::dist/ is out of date. Run pnpm build and commit dist/."; exit 1; }
+      # plugin/dist/ はリポジトリから直接インストールされるのでコミットしている。ソースと食い違ったら落とす。
+      - name: plugin/dist/ がソースと一致する
+        run: git diff --exit-code -- plugin/dist || { echo "::error::plugin/dist/ is out of date. Run pnpm build and commit plugin/dist/."; exit 1; }
 
   # 集約ゲート: branch protection の必須チェックはこの ci だけにする。
   # ジョブを足したら needs に 1 行足すだけ。足し忘れは ci-gate のメタチェックが exit 1 で知らせる。
