@@ -1,0 +1,52 @@
+name: Commitlint
+
+# PR のコミットメッセージと PR タイトルが Conventional Commits に沿っているか検査する。
+# ローカルの commit-msg フックは --no-verify で飛ばせるため、CI でも担保する。
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commitlint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commitlint:
+    name: commitlint
+    runs-on: ubuntu-latest
+    steps:
+      # PR 範囲（base..head）のコミットを検査するため全履歴を取得する。
+      # 既定の shallow clone（fetch-depth: 1）だと base のコミットが無く commitlint が失敗する。
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # SHA は github.event 由来だが run へ直接展開せず env 経由で渡す（書き方を統一）。
+      - name: Lint PR commits
+        env:
+          FROM_SHA: ${{ github.event.pull_request.base.sha }}
+          TO_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitlint --from "${FROM_SHA}" --to "${TO_SHA}" --verbose
+
+      # squash マージでは PR タイトルがそのまま main の件名になる。コミットだけ検査しても
+      # 規約違反のタイトルが履歴へ入るため、PR タイトルも検査する。
+      # タイトルは利用者が自由に書ける文字列なので、run への ${{ }} 直接展開は
+      # スクリプトインジェクションになる。必ず env 経由で渡す。
+      # Dependabot の "Bump …" タイトルは commitlint.config.js の ignores で除外済み。
+      - name: Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "${PR_TITLE}" | pnpm exec commitlint --verbose

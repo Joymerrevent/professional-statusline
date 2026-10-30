@@ -1,0 +1,65 @@
+# CI 集約ゲート: 全依存ジョブの success を確認し、ジョブの needs 追記漏れも検査する。
+# branch protection の必須チェックは、このゲートを呼ぶジョブ 1 つだけにする運用が前提。
+# 呼び出し例:
+#   ci:
+#     needs: [static, test, build]
+#     if: always()            # 依存が落ちても必ず走らせる（skip は branch protection に素通りされる）
+#     steps:
+#       - uses: actions/checkout@<sha> # vX.Y.Z  ← メタチェックがワークフローファイルを読むため必須
+#       - uses: ./.github/actions/ci-gate
+#         with:
+#           needs: ${{ toJSON(needs) }}
+#           skippable: test build   # 任意。意図的に skip しうるジョブ（docs-only 判定など）
+name: ci-gate
+description: 全ジョブの success を集約し、needs への追記漏れも検査する CI 集約ゲート
+inputs:
+  needs:
+    description: 呼び出し側ジョブの toJSON(needs) を渡す
+    required: true
+  workflow-file:
+    description: ジョブ定義を読むワークフローファイル（メタチェック用）
+    default: .github/workflows/ci.yml
+  gate-job:
+    description: このゲート自身のジョブ名（defined から除外する）
+    default: ci
+  skippable:
+    description: >-
+      skipped を success 扱いにしてよいジョブ名（空白区切り）。既定は空＝skip は全て不可。
+      列挙したジョブも skipped 以外の非 success（failure / cancelled）は不可のまま。
+      依存元の失敗で連鎖 skip した場合は、依存元自身が needs に入っている（メタチェックで保証）
+      ため、依存元の失敗でゲートが落ちる。
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Aggregate
+      shell: bash
+      env:
+        NEEDS: ${{ inputs.needs }}
+        WORKFLOW_FILE: ${{ inputs.workflow-file }}
+        GATE_JOB: ${{ inputs.gate-job }}
+        SKIPPABLE: ${{ inputs.skippable }}
+      run: |
+        set -euo pipefail
+        # (1) 足し忘れ防止: ワークフローの全ジョブ（ゲート自身を除く）が needs に入っているか検査。
+        #     yq / jq は ubuntu-latest にプリインストール。
+        defined=$(yq '.jobs | keys | .[]' "$WORKFLOW_FILE" | { grep -vx "$GATE_JOB" || true; } | sort -u)
+        needed=$(printf '%s' "$NEEDS" | jq -r 'keys[]' | sort -u)
+        missing=$(comm -23 <(echo "$defined") <(echo "$needed") || true)
+        if [ -n "$missing" ]; then
+          echo "::error::集約ゲート $GATE_JOB の needs に未登録のジョブ: $(echo $missing) — needs に追加してください"
+          exit 1
+        fi
+        # (2) 全依存ジョブが success か（success 以外＝failure/cancelled/skipped を不可とする。
+        #     ただし skippable に列挙したジョブの skipped だけは許す）。
+        notok=$(printf '%s' "$NEEDS" | jq -r --arg skippable "$SKIPPABLE" '
+          ($skippable | split(" ") | map(select(length > 0))) as $allow
+          | to_entries[]
+          | select(.value.result != "success")
+          | select((.value.result == "skipped" and (.key as $k | $allow | index($k))) | not)
+          | "\(.key)=\(.value.result)"')
+        if [ -n "$notok" ]; then
+          echo "::error::success でないジョブ: $(echo $notok)"
+          exit 1
+        fi
+        echo "OK: 全ジョブ success（skippable の skip を含む）かつ needs 網羅（$(echo $needed)）"

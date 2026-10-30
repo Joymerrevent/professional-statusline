@@ -1,0 +1,9 @@
+# Issue 作成画面の設定（github-templates レシピが shiromoto-jun/professional-statusline を置換して配布）。
+# 空の Issue を禁止し、バグ報告・機能要望のフォームを必ず通す（必要情報の欠けた Issue を防ぐ）。
+blank_issues_enabled: false
+contact_links:
+  # 脆弱性は公開 Issue ではなく非公開のセキュリティアドバイザリで受ける。
+  # リポジトリ設定で Private vulnerability reporting の有効化が必要（recipe.md 参照）。
+  - name: セキュリティ脆弱性の報告（非公開）
+    url: https://github.com/shiromoto-jun/professional-statusline/security/advisories/new
+    about: 脆弱性は公開 Issue ではなく、こちらから非公開で報告してください。

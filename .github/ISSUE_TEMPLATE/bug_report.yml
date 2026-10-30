@@ -1,0 +1,48 @@
+name: バグ報告
+description: 不具合を報告する
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        不具合の報告ありがとうございます。**脆弱性は公開 Issue にせず**、Issue 作成画面の
+        「セキュリティ脆弱性の報告（非公開）」から報告してください。
+  - type: textarea
+    id: what
+    attributes:
+      label: 症状
+      description: 何が起きたか
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順
+      description: 最小の再現コード・手順
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: バージョン
+      placeholder: "1.2.3"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 実行環境
+      description: OS・ランタイム（Node.js 等）のバージョンなど
+      placeholder: "macOS 15 / Node.js 22.x"
+  - type: textarea
+    id: logs
+    attributes:
+      label: エラー / ログ
+      description: スタックトレースやエラーメッセージ（トークン等の秘匿情報は伏せてください）
+      render: shell
