@@ -2,11 +2,9 @@
 // setup install -> the installed statusLine command -> the SessionStart sync -> setup remove.
 // CI runs it on Node.js 20 (the runtime job). Exits 1 on the first failure.
 import { spawnSync } from "node:child_process";
-import console from "node:console";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const dist = join(

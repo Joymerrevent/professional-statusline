@@ -1,5 +1,3 @@
-// node:test's test() returns a promise that the test runner itself awaits.
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
