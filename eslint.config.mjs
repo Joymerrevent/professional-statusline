@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 
@@ -26,14 +27,30 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // node:test の test() / describe() は Promise を返すが、待つのはテストランナー自身。
+      // await 忘れの検出は残したまま、この 4 つの呼び出しだけを外す
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        {
+          allowForKnownSafeCalls: [
+            {
+              from: "package",
+              package: "node:test",
+              name: ["test", "it", "describe", "suite"],
+            },
+          ],
+        },
+      ],
     },
   },
 
   // 設定系ファイル（このファイル含む）は型情報なしで lint する
   // ※ tsconfig に含まれない *.mjs/*.js/*.cjs を type-checked 対象から外す
+  // Node.js で動かす前提なので、process / console などのグローバル変数を教える（教えないと no-undef になる）
   {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: globals.node },
   },
 
   // 整形に関するルールを無効化（Prettier と競合させない）。必ず最後に置く。
