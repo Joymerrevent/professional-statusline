@@ -1,7 +1,5 @@
 // Runs the bundled files in plugin/dist/ the way Claude Code and the setup skill run them.
 // Every run uses an isolated home folder, so the real settings.json and credentials are never touched.
-// node:test's test() returns a promise that the test runner itself awaits.
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
