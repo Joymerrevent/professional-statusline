@@ -1,0 +1,14 @@
+{
+  "name": "professional-statusline",
+  "description": "Professional Statusline for Claude Code, served from its own repository.",
+  "owner": {
+    "name": "JunShiromoto"
+  },
+  "plugins": [
+    {
+      "name": "professional-statusline",
+      "source": "./",
+      "description": "A three-line status line: model and effort in Claude Code's own colors, context and usage limits with reset countdowns, and your place in git."
+    }
+  ]
+}
