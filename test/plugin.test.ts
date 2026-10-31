@@ -14,6 +14,7 @@ import {
 import { join } from "node:path";
 import { test } from "node:test";
 import {
+  ROOT,
   SRC,
   isolatedEnv,
   runInShell,
@@ -291,6 +292,33 @@ test("sync finds the data folder in CLAUDE_PLUGIN_DATA, the way Claude Code runs
     readFileSync(join(s.data, "src", "statusline.mts"), "utf8"),
     readFileSync(STATUSLINE, "utf8"),
   );
+});
+
+// The plugin directory refuses a hook in a plugin subfolder whose command or arguments use a variable
+// other than ${CLAUDE_PLUGIN_ROOT}, because it can't tell which files such a hook runs (COMMAND_PATH_COMPUTED).
+test("the hooks name their files from ${CLAUDE_PLUGIN_ROOT} and use no other variable", () => {
+  const { hooks } = JSON.parse(
+    readFileSync(join(ROOT, "plugin", "hooks", "hooks.json"), "utf8"),
+  ) as {
+    hooks: Record<
+      string,
+      Array<{ hooks: Array<{ command: string; args?: string[] }> }>
+    >;
+  };
+  const commands = Object.values(hooks).flatMap((groups) =>
+    groups.flatMap((group) => group.hooks),
+  );
+  assert.notEqual(commands.length, 0);
+  for (const { command, args = [] } of commands) {
+    for (const part of [command, ...args]) {
+      const variables = part.match(/\$(?:\{[^}]*\}|\w+|\()/g) ?? [];
+      assert.deepEqual(
+        variables.filter((variable) => variable !== "${CLAUDE_PLUGIN_ROOT}"),
+        [],
+        part,
+      );
+    }
+  }
 });
 
 test("sync relinks a 0.1.0 install, and install then moves it to the new command", () => {

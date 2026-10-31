@@ -34,6 +34,7 @@ function userStatusLine(): unknown {
 }
 
 try {
+  // The hook passes no argument: Claude Code sets CLAUDE_PLUGIN_DATA for hook processes. Tests pass the folder.
   const dataDir = process.argv[2] || process.env["CLAUDE_PLUGIN_DATA"];
   const pluginRoot = pluginRootFrom(import.meta.url);
   if (dataDir && isInstalled(dataDir)) {
