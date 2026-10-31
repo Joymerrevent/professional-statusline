@@ -2,13 +2,9 @@
 
 [Claude Code][claude-code] を一日中使う人のための、3 行のステータスラインです。
 
-```text
-🧠 Opus 5.5 high · 💰$1.23 · +120 -14
-💭 ctx 64% left · ⏳ 5h 86% left ↻1h21m · 7d 60% left ↻1d1h
-[I] · 📁 [my-app]/src/lib (feature/login) * ↑1
-```
+![ステータスラインの 3 行。モデルと effort、コンテキストと利用上限の残り、vim モードと git の場所][screenshot]
 
-[English][readme-en]
+[English][readme-en] · [変更の履歴（英語）][changelog]
 
 ## 各行に出るもの
 
@@ -89,6 +85,7 @@ Claude Code は、claude.ai のチーム・エンタープライズのアカウ�
 - **ステータスラインが空になる：** フォルダの信頼の確認を承認してください。Claude Code を起動するターミナルで、`node --version` が 22.18 以上を示すかも確かめてください。
 - **特定のプロジェクトでだけ別のステータスラインが出る：** プロジェクトの `.claude/settings.json` か `.claude/settings.local.json` が `statusLine` を決めています。プロジェクトの設定はユーザー設定より優先されます。
 - **setup の後も表示が変わらない：** Claude Code を再起動してください。
+- **tmux の中だと effort の色が少し違って見える：** tmux の中では、Claude Code がステータスラインを 256 色で描くため、`/effort` の画面と近い色にはなりますが、同じ色にはなりません。tmux の外では同じ色です。
 
 ## 開発
 
@@ -101,12 +98,16 @@ Claude Code がインストールするものは、`plugin/src/` の TypeScript 
 
 手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>/plugin` で Claude Code を起動します。
 
+変更を利用者に届けるときは、`plugin/.claude-plugin/plugin.json`（と `package.json`）の `version` を上げ、[変更の履歴][changelog]に書き足します。インストール済みの写しは、`version` が変わるまで同じ版のままです。変更が `main` に入ったら、`claude plugin tag plugin --push` でタグを付けます。Claude Code がプラグインの版に使う `professional-statusline--vX.Y.Z` の形のタグができるので、そのタグから GitHub の Release を作って公開します。
+
 ## ライセンス
 
 [MIT][license]
 
 [claude-code]: https://code.claude.com/docs
 [readme-en]: README.md
+[changelog]: CHANGELOG.md
+[screenshot]: docs/images/statusline.png
 [statusline-data]: https://code.claude.com/docs/en/statusline#available-data
 [nodejs]: https://nodejs.org/
 [legal]: https://code.claude.com/docs/en/legal-and-compliance

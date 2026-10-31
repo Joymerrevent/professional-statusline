@@ -7,6 +7,8 @@
     "name": "Joymerrevent",
     "url": "https://joymerrevent.com/"
   },
+  "homepage": "https://github.com/Joymerrevent/professional-statusline#readme",
+  "repository": "https://github.com/Joymerrevent/professional-statusline",
   "license": "MIT",
   "keywords": [
     "statusline",

@@ -2,13 +2,9 @@
 
 A three-line status line for [Claude Code][claude-code], for people who use it all day.
 
-```text
-🧠 Opus 5.5 high · 💰$1.23 · +120 -14
-💭 ctx 64% left · ⏳ 5h 86% left ↻1h21m · 7d 60% left ↻1d1h
-[I] · 📁 [my-app]/src/lib (feature/login) * ↑1
-```
+![The three lines of the status line: model and effort, context and usage limits, vim mode and git location][screenshot]
 
-[日本語の説明][readme-ja]
+[日本語の説明][readme-ja] · [Changelog][changelog]
 
 ## What each line shows
 
@@ -89,6 +85,7 @@ If you uninstall first, `settings.json` keeps pointing at a file that no longer 
 - **The status line is blank:** accept the workspace trust dialog, and check that `node --version` shows 22.18 or later in the terminal where you start Claude Code.
 - **Another status line shows in one project:** the project's `.claude/settings.json` or `.claude/settings.local.json` sets its own `statusLine`, which takes precedence over your user settings.
 - **The status line did not change after setup:** restart Claude Code.
+- **The effort colors look slightly different in tmux:** inside tmux, Claude Code draws the status line with 256 colors, so the colors are close to, but not the same as, the `/effort` screen. Outside tmux they match.
 
 ## Development
 
@@ -101,12 +98,16 @@ Everything that Claude Code installs is in `plugin/`, including the TypeScript s
 
 To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>/plugin`.
 
+To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json` (and in `package.json`) and add an entry to the [changelog][changelog]. Installed copies stay on their version until it changes. After the change is on `main`, tag it with `claude plugin tag plugin --push`, which creates the `professional-statusline--vX.Y.Z` tag that Claude Code uses for plugin versions, and publish a GitHub release from that tag.
+
 ## License
 
 [MIT][license]
 
 [claude-code]: https://code.claude.com/docs
 [readme-ja]: README.ja.md
+[changelog]: CHANGELOG.md
+[screenshot]: docs/images/statusline.png
 [statusline-data]: https://code.claude.com/docs/en/statusline#available-data
 [nodejs]: https://nodejs.org/
 [legal]: https://code.claude.com/docs/en/legal-and-compliance
