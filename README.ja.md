@@ -16,7 +16,7 @@
 
 色は残りの量で変わります。50% 以上は緑、20% 以上は黄、20% 未満は赤です。
 
-ステータスラインに出すのは、Claude Code がステータスラインに渡す値（[渡される値の一覧][statusline-data]）と、`git` の結果だけです。任意の[エンタープライズの利用額の表示][enterprise-spend]を有効にしない限り、ネットワークには接続しません。
+ステータスラインに出すのは、Claude Code がステータスラインに渡す値（[渡される値の一覧][statusline-data]）と、`git` の結果だけです。任意の[エンタープライズの利用額の表示][enterprise-spend]を有効にしない限り、ネットワークには接続しません。プラグインが読むもの・保存するもの・送るものは、[プライバシーポリシー（英語）][privacy]にまとめています。
 
 ## 必要なもの
 
@@ -114,3 +114,4 @@ Claude Code がインストールするものは、`plugin/src/` の TypeScript 
 [legal]: https://code.claude.com/docs/en/legal-and-compliance
 [enterprise-spend]: #任意チームエンタープライズの利用額
 [license]: LICENSE
+[privacy]: plugin/PRIVACY.md

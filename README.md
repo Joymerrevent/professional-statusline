@@ -16,7 +16,7 @@ A three-line status line for [Claude Code][claude-code], for people who use it a
 
 Colors follow how much is left: green at 50% or more, yellow at 20% or more, red below 20%.
 
-The status line shows only the values that Claude Code sends to status lines ([available data][statusline-data]), plus what `git` reports. It makes no network requests, unless you turn on the optional [enterprise spend display][enterprise-spend].
+The status line shows only the values that Claude Code sends to status lines ([available data][statusline-data]), plus what `git` reports. It makes no network requests, unless you turn on the optional [enterprise spend display][enterprise-spend]. The [privacy policy][privacy] lists what the plugin reads, stores, and sends.
 
 ## Requirements
 
@@ -114,3 +114,4 @@ To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json
 [legal]: https://code.claude.com/docs/en/legal-and-compliance
 [enterprise-spend]: #optional-spend-limit-for-team-and-enterprise
 [license]: LICENSE
+[privacy]: plugin/PRIVACY.md
