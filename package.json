@@ -1,6 +1,6 @@
 {
   "name": "professional-statusline",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "A three-line status line for Claude Code: model and effort, context and usage limits, and where you are in git.",
   "license": "MIT",
