@@ -17,8 +17,11 @@ The status line needs [Node.js][nodejs] 22.18 or later, with `node` on your `PAT
 - **A `SessionStart` hook** refreshes the copy after the plugin updates. It prints nothing and makes no network requests.
 - **The optional spend display for claude.ai Team and Enterprise accounts is off by default.** When you turn it on with `/professional-statusline:setup enterprise-spend on`, the status line reads your Claude Code sign-in token (from the macOS keychain, or from `.credentials.json` in your Claude Code configuration folder) and sends it to Anthropic's `https://api.anthropic.com/api/oauth/usage`, an endpoint that is not public, at most once every 5 minutes. The result is cached in the plugin's data folder. The token is not sent anywhere else and is not stored. Turn it off with `/professional-statusline:setup enterprise-spend off`.
 
+The [privacy policy][privacy] lists what the plugin reads, stores, and sends, and how to delete what it stores.
+
 The [full README][readme] has screenshots, troubleshooting, and the notes to read before you turn on the spend display. The plugin is released under the MIT license.
 
 [claude-code]: https://code.claude.com/docs
 [nodejs]: https://nodejs.org/
 [readme]: https://github.com/Joymerrevent/professional-statusline#readme
+[privacy]: https://github.com/Joymerrevent/professional-statusline/blob/main/plugin/PRIVACY.md

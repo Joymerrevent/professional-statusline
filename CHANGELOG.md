@@ -4,6 +4,12 @@ All notable changes to this plugin are documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog], and this project adheres to [Semantic Versioning][semver].
 
+## [0.2.4] - 2026-10-31
+
+### Added
+
+- A [privacy policy][privacy] that lists what the plugin reads, stores, and sends, and how to delete what it stores. The README and the plugin's listing in Anthropic's plugin directory link to it.
+
 ## [0.2.3] - 2026-10-31
 
 ### Added
@@ -48,6 +54,8 @@ The format is based on [Keep a Changelog][keep-a-changelog], and this project ad
 
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
+[privacy]: plugin/PRIVACY.md
+[0.2.4]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.3...professional-statusline--v0.2.4
 [0.2.3]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.2...professional-statusline--v0.2.3
 [0.2.2]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.1...professional-statusline--v0.2.2
 [0.2.1]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.0...professional-statusline--v0.2.1
