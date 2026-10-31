@@ -80,7 +80,23 @@ const input = JSON.stringify({
     five_hour: { used_percentage: 23.5, resets_at: 9999999999 },
   },
 });
+const quotedPath = /^node "(.+)"$/.exec(command)?.[1] ?? "";
 for (const [name, [program, ...args]] of shells) {
+  if (name === "powershell") {
+    // PowerShell expands $HOME (USERPROFILE on Windows) to the installed copy. Whether PowerShell hands its
+    // standard input to node under -Command is not established, so the whole status line isn't run here.
+    const found = spawnSync(
+      program,
+      [...args, `Test-Path -LiteralPath "${quotedPath}"`],
+      { env, encoding: "utf8" },
+    );
+    check(
+      "powershell: $HOME leads to the installed copy",
+      (found.stdout ?? "").trim() === "True",
+      (found.stdout ?? "") + (found.stderr ?? ""),
+    );
+    continue;
+  }
   const rendered = spawnSync(program, [...args, command], {
     env,
     encoding: "utf8",
@@ -98,7 +114,6 @@ for (const [name, [program, ...args]] of shells) {
     rendered.stderr === "",
     rendered.stderr,
   );
-  // PowerShell may re-encode the emoji of a native command, so check the ASCII part in every shell.
   check(
     `${name}: line 1 has the model and effort`,
     plain.includes("CI high") && plain.includes("$0.00"),

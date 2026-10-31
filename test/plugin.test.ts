@@ -71,7 +71,16 @@ test("install writes a $HOME-based statusLine, copies plugin/src, and the comman
     effort: { level: "high" },
     workspace: { current_dir: s.home },
   });
+  const path = /^node "(.+)"$/.exec(statusLine.command)?.[1] ?? "";
   for (const shell of statusLineShells()) {
+    if (shell.name === "powershell") {
+      // PowerShell expands $HOME (USERPROFILE on Windows) to the copy that setup made.
+      const found = runInShell(shell.argv, `Test-Path -LiteralPath "${path}"`, {
+        env: s.env,
+      });
+      assert.equal(found.stdout.trim(), "True", `powershell: ${found.stderr}`);
+      continue;
+    }
     const rendered = runInShell(shell.argv, statusLine.command, {
       input,
       env: s.env,
@@ -79,15 +88,11 @@ test("install writes a $HOME-based statusLine, copies plugin/src, and the comman
     assert.equal(rendered.status, 0, `${shell.name}: ${rendered.stderr}`);
     // Node.js must run the TypeScript without warnings (22.18 and later print none).
     assert.equal(rendered.stderr, "", shell.name);
-    // PowerShell may re-encode the emoji of a native command, so check the ASCII part in every shell.
-    assert.match(stripAnsi(rendered.stdout), /Opus 5\.5 high/, shell.name);
-    if (shell.name !== "powershell") {
-      assert.match(
-        stripAnsi(rendered.stdout),
-        /^🧠 Opus 5\.5 high · 💰\$0\.00 · \+0 -0\n💭 ctx --\n📁 /,
-        shell.name,
-      );
-    }
+    assert.match(
+      stripAnsi(rendered.stdout),
+      /^🧠 Opus 5\.5 high · 💰\$0\.00 · \+0 -0\n💭 ctx --\n📁 /,
+      shell.name,
+    );
   }
 });
 
