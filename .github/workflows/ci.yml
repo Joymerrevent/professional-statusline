@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, develop]
+    branches: [main]
 
 # 既定は読み取りのみ。書き込み等が要るジョブだけ job 単位で足す（最小権限）。
 permissions:

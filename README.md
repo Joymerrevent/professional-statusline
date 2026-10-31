@@ -99,6 +99,14 @@ Everything that Claude Code installs is in `plugin/`, including the TypeScript s
 
 To try a local copy, start Claude Code with `claude --plugin-dir <path to this repository>/plugin`.
 
+### Branches and releases
+
+The repository follows GitHub Flow. `main` is the only long-lived branch.
+
+- For each change, create a branch from `main`, named after the type of change, such as `fix/…` or `docs/…`, and open a pull request to `main`.
+- Pull requests are squash-merged after the `ci` check passes. The pull request title becomes the commit subject on `main`, so write it as a [Conventional Commit][conventional-commits]. GitHub deletes the branch after the merge.
+- To release, raise `version` in `package.json` and `plugin/.claude-plugin/plugin.json` and add the version to `CHANGELOG.md` in a pull request. After the merge, tag `main` with `claude plugin tag --push ./plugin` and publish a GitHub Release with the changelog entry.
+
 To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json` (and in `package.json`) and add an entry to the [changelog][changelog]. Installed copies stay on their version until it changes. After the change is on `main`, tag it with `claude plugin tag plugin --push`, which creates the `professional-statusline--vX.Y.Z` tag that Claude Code uses for plugin versions, and publish a GitHub release from that tag.
 
 ## License
@@ -114,4 +122,5 @@ To ship a change to users, raise `version` in `plugin/.claude-plugin/plugin.json
 [legal]: https://code.claude.com/docs/en/legal-and-compliance
 [enterprise-spend]: #optional-spend-limit-for-team-and-enterprise
 [license]: LICENSE
+[conventional-commits]: https://www.conventionalcommits.org/
 [privacy]: plugin/PRIVACY.md
