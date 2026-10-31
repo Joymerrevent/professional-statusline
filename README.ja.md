@@ -99,6 +99,14 @@ Claude Code がインストールするものは、`plugin/src/` の TypeScript 
 
 手元の版を試すときは、`claude --plugin-dir <このリポジトリのパス>/plugin` で Claude Code を起動します。
 
+### ブランチとリリース
+
+このリポジトリは GitHub Flow で運用します。長く残るブランチは `main` だけです。
+
+- 変更ごとに `main` からブランチを作り、`main` へ PR を出します。ブランチ名は、`fix/…` や `docs/…` のように変更の種類から始めます。
+- PR は、`ci` のチェックが通ったら squash でマージします。PR のタイトルが `main` のコミットの件名になるので、[Conventional Commits][conventional-commits] の形で書きます。マージの後、GitHub がブランチを消します。
+- リリースするときは、`package.json` と `plugin/.claude-plugin/plugin.json` の `version` を上げ、`CHANGELOG.md` にその版を足す PR を出します。マージの後、`claude plugin tag --push ./plugin` で `main` にタグを付け、変更の履歴の節を本文にした GitHub の Release を公開します。
+
 変更を利用者に届けるときは、`plugin/.claude-plugin/plugin.json`（と `package.json`）の `version` を上げ、[変更の履歴][changelog]に書き足します。インストール済みの写しは、`version` が変わるまで同じ版のままです。変更が `main` に入ったら、`claude plugin tag plugin --push` でタグを付けます。Claude Code がプラグインの版に使う `professional-statusline--vX.Y.Z` の形のタグができるので、そのタグから GitHub の Release を作って公開します。
 
 ## ライセンス
@@ -114,4 +122,5 @@ Claude Code がインストールするものは、`plugin/src/` の TypeScript 
 [legal]: https://code.claude.com/docs/en/legal-and-compliance
 [enterprise-spend]: #任意チームエンタープライズの利用額
 [license]: LICENSE
+[conventional-commits]: https://www.conventionalcommits.org/ja/v1.0.0/
 [privacy]: plugin/PRIVACY.md
