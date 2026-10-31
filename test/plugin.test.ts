@@ -278,6 +278,21 @@ test("sync updates an installed copy, prints nothing, and does nothing before in
   );
 });
 
+test("sync finds the data folder in CLAUDE_PLUGIN_DATA, the way Claude Code runs the hook", () => {
+  const s = sandbox();
+  assert.equal(s.setup("install").status, 0);
+  writeFileSync(join(s.data, "src", "statusline.mts"), "// an older version\n");
+  const synced = runNode(SYNC, [], {
+    env: { ...s.env, CLAUDE_PLUGIN_DATA: s.data },
+  });
+  assert.equal(synced.status, 0);
+  assert.equal(synced.stdout, "");
+  assert.equal(
+    readFileSync(join(s.data, "src", "statusline.mts"), "utf8"),
+    readFileSync(STATUSLINE, "utf8"),
+  );
+});
+
 test("sync relinks a 0.1.0 install, and install then moves it to the new command", () => {
   const s = sandbox();
   // 0.1.0 installed one bundled file at <data>/statusline.mjs and pointed settings.json at it.
