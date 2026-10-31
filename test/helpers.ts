@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after } from "node:test";
@@ -25,13 +25,66 @@ export function isolatedEnv(
   home: string,
   extra: Record<string, string> = {},
 ): NodeJS.ProcessEnv {
+  // Windows programs such as PowerShell need a few system variables to start. None of them point at
+  // Claude Code's files, so keeping them doesn't let a test reach the real settings.
+  const system = Object.fromEntries(
+    [
+      "SystemRoot",
+      "windir",
+      "ComSpec",
+      "TEMP",
+      "TMP",
+      "PATHEXT",
+      "PSModulePath",
+    ]
+      .filter((name) => process.env[name] !== undefined)
+      .map((name) => [name, process.env[name]]),
+  );
   return {
+    ...system,
     PATH: process.env["PATH"],
-    SystemRoot: process.env["SystemRoot"],
     HOME: home,
     USERPROFILE: home,
     CLAUDE_CONFIG_DIR: join(home, ".claude"),
     ...extra,
+  };
+}
+
+// The shells Claude Code runs a statusLine command with: bash on macOS and Linux, and on Windows
+// Git Bash when it is installed, otherwise PowerShell. On Windows, both are returned.
+// For PowerShell, tests check where $HOME points rather than running the whole status line, because
+// whether PowerShell hands its standard input to node under -Command is not established.
+export function statusLineShells(): Array<{ name: string; argv: string[] }> {
+  if (process.platform !== "win32")
+    return [{ name: "bash", argv: ["bash", "-c"] }];
+  const gitBash = join(
+    process.env["ProgramFiles"] ?? "C:\\Program Files",
+    "Git",
+    "bin",
+    "bash.exe",
+  );
+  return [
+    { name: "git-bash", argv: [existsSync(gitBash) ? gitBash : "bash", "-c"] },
+    { name: "powershell", argv: ["powershell", "-NoProfile", "-Command"] },
+  ];
+}
+
+export function runInShell(
+  argv: string[],
+  command: string,
+  options: { input?: string; env: NodeJS.ProcessEnv },
+) {
+  const [program = "", ...args] = argv;
+  const result = spawnSync(program, [...args, command], {
+    input: options.input ?? "",
+    env: options.env,
+    encoding: "utf8",
+    timeout: 20_000,
+  });
+  return {
+    status: result.status,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
   };
 }
 

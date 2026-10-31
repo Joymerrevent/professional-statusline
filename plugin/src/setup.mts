@@ -25,16 +25,16 @@ import {
 } from "./enterprise.mts";
 import {
   copySource,
-  ENTRY_NAME,
   installedDir,
   installedEntry,
-  LEGACY_ENTRY_NAME,
+  isOurStatusLine,
   legacyEntry,
   pluginRootFrom,
   sameSource,
   sourceDir,
+  statusLineCommand,
 } from "./install.mts";
-import { configDir, toForwardSlashes } from "./paths.mts";
+import { configDir } from "./paths.mts";
 
 const REFRESH_INTERVAL_SEC = 10;
 
@@ -75,19 +75,6 @@ function writeSettings(file: SettingsFile): void {
   renameSync(temporary, file.path);
 }
 
-// This version's command, or the one 0.1.0 wrote (<data>/statusline.mjs).
-function isOurStatusLine(value: unknown): boolean {
-  const text = JSON.stringify(value ?? null);
-  return (
-    text.includes("professional-statusline") &&
-    (text.includes(ENTRY_NAME) || text.includes(LEGACY_ENTRY_NAME))
-  );
-}
-
-function statusLineCommand(dataDir: string): string {
-  return `node "${toForwardSlashes(installedEntry(dataDir))}"`;
-}
-
 function backupPath(dataDir: string): string {
   return join(dataDir, "previous-statusline.json");
 }
@@ -119,6 +106,7 @@ function install(
   pluginRoot: string,
   dataDir: string,
   settingsPath: string,
+  env: NodeJS.ProcessEnv,
   log: (line: string) => void,
 ): void {
   const settings = readSettings(settingsPath);
@@ -133,7 +121,7 @@ function install(
   }
   settings.data["statusLine"] = {
     type: "command",
-    command: statusLineCommand(dataDir),
+    command: statusLineCommand(dataDir, env),
     refreshInterval: REFRESH_INTERVAL_SEC,
   };
   writeSettings(settings);
@@ -272,7 +260,7 @@ function runSetup(
 
   switch (command) {
     case "install":
-      install(pluginRoot, dataDir, settingsPath, log);
+      install(pluginRoot, dataDir, settingsPath, env, log);
       return;
     case "remove":
       remove(dataDir, settingsPath, log);

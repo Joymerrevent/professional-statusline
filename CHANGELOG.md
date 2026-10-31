@@ -4,6 +4,13 @@ All notable changes to this plugin are documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog], and this project adheres to [Semantic Versioning][semver].
 
+## [0.2.1] - 2026-10-31
+
+### Fixed
+
+- Setup now writes the `statusLine` command with `$HOME` instead of the full path when the plugin's data folder is under your home folder. The same `settings.json` works on computers with different user names. Run `/professional-statusline:setup` again to switch an existing install to the new command.
+- On a computer whose `settings.json` already points at this plugin but has no copy of the status line yet, for example because `settings.json` is shared between computers, the `SessionStart` hook now makes the copy at the next start.
+
 ## [0.2.0] - 2026-10-30
 
 ### Changed
@@ -25,5 +32,6 @@ The format is based on [Keep a Changelog][keep-a-changelog], and this project ad
 
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
+[0.2.1]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.0...professional-statusline--v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.1.0...professional-statusline--v0.2.0
 [0.1.0]: https://github.com/Joymerrevent/professional-statusline/tree/professional-statusline--v0.1.0

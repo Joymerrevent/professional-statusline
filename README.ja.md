@@ -77,7 +77,8 @@ Claude Code は、claude.ai のチーム・エンタープライズのアカウ�
 ## 仕組み
 
 - setup は、プラグインの TypeScript のソース（`plugin/src/`）をプラグインのデータのフォルダ（`~/.claude/plugins/data/professional-statusline-professional-statusline/src/`）に写し、`statusLine` から写した方を指します。プラグイン本体のフォルダは更新のたびに変わりますが、データのフォルダは変わりません。
-- プラグインの更新の後は、`SessionStart` のフックが写しを新しくします。setup を実行するまでフックは何もせず、何も出力しません。
+- データのフォルダがホームフォルダの下にあるときは、`statusLine` のコマンドをフルパスではなく `$HOME` から書きます。ユーザー名が違うパソコンでも、同じ `settings.json` で動きます。`$HOME` は bash・zsh・PowerShell のどれでも展開されます。
+- プラグインの更新の後は、`SessionStart` のフックが写しを新しくします。`settings.json` を共有していて写しがまだ無いパソコンでは、そのパソコンにプラグインが入った後の次の起動で、フックが写しを作ります。それ以外では、setup を実行するまでフックは何もしません。フックは何も出力しません。
 - setup が書き換えるのは `statusLine` の項目だけです。`settings.json` が正しい JSON でないときは書き込みません。
 
 ## うまく動かないとき

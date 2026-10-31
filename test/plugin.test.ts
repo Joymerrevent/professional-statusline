@@ -8,11 +8,20 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { SRC, isolatedEnv, runNode, stripAnsi, tempDir } from "./helpers.ts";
+import {
+  SRC,
+  isolatedEnv,
+  runInShell,
+  runNode,
+  statusLineShells,
+  stripAnsi,
+  tempDir,
+} from "./helpers.ts";
 
 const SETUP = join(SRC, "setup.mts");
 const SYNC = join(SRC, "sync.mts");
@@ -36,7 +45,7 @@ function sandbox() {
   return { home, data, settings, env, setup, readSettings };
 }
 
-test("install writes statusLine, copies plugin/src, and the command renders", () => {
+test("install writes a $HOME-based statusLine, copies plugin/src, and the command renders in each shell", () => {
   const s = sandbox();
   const result = s.setup("install");
   assert.equal(result.status, 0, result.stderr);
@@ -51,27 +60,97 @@ test("install writes statusLine, copies plugin/src, and the command renders", ()
   };
   assert.equal(statusLine.type, "command");
   assert.equal(statusLine.refreshInterval, 10);
-  assert.match(statusLine.command, /^node ".*\/src\/statusline\.mts"$/);
-  assert.equal(statusLine.command.includes("\\"), false);
+  assert.equal(
+    statusLine.command,
+    'node "$HOME/.claude/plugins/data/professional-statusline-professional-statusline/src/statusline.mts"',
+  );
 
-  // Run the command through a shell, as Claude Code does.
-  const rendered = spawnSync(statusLine.command, {
-    shell: true,
-    input: JSON.stringify({
-      model: { display_name: "Opus 5.5" },
-      effort: { level: "high" },
-      workspace: { current_dir: s.home },
-    }),
+  // Run the command through the shells Claude Code uses, so that $HOME is expanded as it is for real.
+  const input = JSON.stringify({
+    model: { display_name: "Opus 5.5" },
+    effort: { level: "high" },
+    workspace: { current_dir: s.home },
+  });
+  const path = /^node "(.+)"$/.exec(statusLine.command)?.[1] ?? "";
+  for (const shell of statusLineShells()) {
+    if (shell.name === "powershell") {
+      // PowerShell expands $HOME (USERPROFILE on Windows) to the copy that setup made.
+      const found = runInShell(shell.argv, `Test-Path -LiteralPath "${path}"`, {
+        env: s.env,
+      });
+      assert.equal(found.stdout.trim(), "True", `powershell: ${found.stderr}`);
+      continue;
+    }
+    const rendered = runInShell(shell.argv, statusLine.command, {
+      input,
+      env: s.env,
+    });
+    assert.equal(rendered.status, 0, `${shell.name}: ${rendered.stderr}`);
+    // Node.js must run the TypeScript without warnings (22.18 and later print none).
+    assert.equal(rendered.stderr, "", shell.name);
+    assert.match(
+      stripAnsi(rendered.stdout),
+      /^🧠 Opus 5\.5 high · 💰\$0\.00 · \+0 -0\n💭 ctx --\n📁 /,
+      shell.name,
+    );
+  }
+});
+
+test("sync installs the missing copy when settings.json already points at this data folder", () => {
+  const s = sandbox();
+  assert.equal(s.setup("install").status, 0);
+  const command = (s.readSettings()["statusLine"] as { command: string })
+    .command;
+  // Another computer that shares settings.json has the plugin but not the copy.
+  rmSync(s.data, { recursive: true, force: true });
+
+  const healed = runNode(SYNC, [s.data], { env: s.env });
+  assert.equal(healed.status, 0);
+  assert.equal(healed.stdout, "");
+  assert.deepEqual(
+    readdirSync(join(s.data, "src")).sort(),
+    readdirSync(SRC).sort(),
+  );
+  assert.equal(existsSync(join(s.data, "statusline.mjs")), false);
+
+  const [shell] = statusLineShells();
+  const rendered = runInShell(shell?.argv ?? [], command, {
+    input: JSON.stringify({ model: { display_name: "Opus 5.5" } }),
     env: s.env,
-    encoding: "utf8",
   });
   assert.equal(rendered.status, 0, rendered.stderr);
-  // Node.js must run the TypeScript without warnings (22.18 and later print none).
-  assert.equal(rendered.stderr, "");
-  assert.match(
-    stripAnsi(rendered.stdout),
-    /^🧠 Opus 5\.5 high · 💰\$0\.00 · \+0 -0\n💭 ctx --\n📁 /,
+  assert.match(stripAnsi(rendered.stdout), /Opus 5\.5/);
+});
+
+test("sync installs nothing when settings.json runs another status line", () => {
+  const s = sandbox();
+  mkdirSync(join(s.home, ".claude"), { recursive: true });
+  writeFileSync(
+    s.settings,
+    JSON.stringify({
+      statusLine: { type: "command", command: "bash ~/.claude/statusline.sh" },
+    }),
   );
+  const result = runNode(SYNC, [s.data], { env: s.env });
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(s.data), false);
+});
+
+test("sync restores a 0.1.0 statusLine on a computer that has neither the copy nor the launcher", () => {
+  const s = sandbox();
+  mkdirSync(join(s.home, ".claude"), { recursive: true });
+  const legacy = join(s.data, "statusline.mjs");
+  const legacyCommand = `node "${legacy.replaceAll("\\", "/")}"`;
+  writeFileSync(
+    s.settings,
+    JSON.stringify({ statusLine: { type: "command", command: legacyCommand } }),
+  );
+  assert.equal(runNode(SYNC, [s.data], { env: s.env }).status, 0);
+  assert.equal(
+    readFileSync(legacy, "utf8"),
+    'import "./src/statusline.mts";\n',
+  );
+  assert.equal(existsSync(join(s.data, "src", "statusline.mts")), true);
 });
 
 test("a second install swaps the copy and leaves no temporary folder", () => {
