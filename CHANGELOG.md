@@ -4,6 +4,16 @@ All notable changes to this plugin are documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog], and this project adheres to [Semantic Versioning][semver].
 
+## [0.2.2] - 2026-10-31
+
+### Added
+
+- An icon for the plugin's listing in Anthropic's plugin directory.
+
+### Changed
+
+- The `SessionStart` hook now finds the plugin's data folder through the `CLAUDE_PLUGIN_DATA` environment variable that Claude Code sets, instead of a command argument, as Anthropic's plugin directory requires. The status line works the same way.
+
 ## [0.2.1] - 2026-10-31
 
 ### Fixed
@@ -32,6 +42,7 @@ The format is based on [Keep a Changelog][keep-a-changelog], and this project ad
 
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
+[0.2.2]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.1...professional-statusline--v0.2.2
 [0.2.1]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.2.0...professional-statusline--v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/professional-statusline/compare/professional-statusline--v0.1.0...professional-statusline--v0.2.0
 [0.1.0]: https://github.com/Joymerrevent/professional-statusline/tree/professional-statusline--v0.1.0
