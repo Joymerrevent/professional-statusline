@@ -1,7 +1,7 @@
 {
   "name": "professional-statusline",
   "displayName": "Professional Statusline",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A three-line status line: model and effort in Claude Code's own colors, context and usage limits with reset countdowns, and your place in git. Run /professional-statusline:setup after installing.",
   "author": {
     "name": "Joymerrevent",
