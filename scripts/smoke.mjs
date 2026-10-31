@@ -2,7 +2,7 @@
 // setup install -> the installed statusLine command -> the SessionStart sync -> setup remove.
 // CI runs it on Node.js 22.18.0 (the runtime job). Exits 1 on the first failure.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,48 +49,68 @@ const settings = JSON.parse(
 );
 const command = settings.statusLine?.command ?? "";
 check(
-  "statusLine points at the installed copy",
-  /^node ".*\/src\/statusline\.mts"$/.test(command),
+  "statusLine points at the installed copy through $HOME",
+  /^node "\$HOME\/\.claude\/plugins\/data\/professional-statusline-smoke\/src\/statusline\.mts"$/.test(
+    command,
+  ),
   command,
 );
 
-const rendered = spawnSync(command, {
-  shell: true,
-  env,
-  encoding: "utf8",
-  input: JSON.stringify({
-    model: { display_name: "CI" },
-    effort: { level: "high" },
-    workspace: { current_dir: home },
-    context_window: { remaining_percentage: 72.5 },
-    rate_limits: {
-      five_hour: { used_percentage: 23.5, resets_at: 9999999999 },
-    },
-  }),
+// The shells Claude Code runs a statusLine command with: bash on macOS and Linux, and on Windows
+// Git Bash when it is installed, otherwise PowerShell. Both are checked on Windows.
+const gitBash = join(
+  process.env.ProgramFiles ?? "C:\\Program Files",
+  "Git",
+  "bin",
+  "bash.exe",
+);
+const shells =
+  process.platform === "win32"
+    ? [
+        ["git-bash", [existsSync(gitBash) ? gitBash : "bash", "-c"]],
+        ["powershell", ["powershell", "-NoProfile", "-Command"]],
+      ]
+    : [["bash", ["bash", "-c"]]];
+const input = JSON.stringify({
+  model: { display_name: "CI" },
+  effort: { level: "high" },
+  workspace: { current_dir: home },
+  context_window: { remaining_percentage: 72.5 },
+  rate_limits: {
+    five_hour: { used_percentage: 23.5, resets_at: 9999999999 },
+  },
 });
-// eslint-disable-next-line no-control-regex -- ANSI color codes start with the ESC control character.
-const plain = rendered.stdout.replace(/\x1b\[[0-9;]*m/g, "");
-check(
-  "the statusLine command renders three lines",
-  rendered.status === 0 && plain.split("\n").length === 3,
-  plain + rendered.stderr,
-);
-check(
-  "Node.js prints no warning while running the TypeScript",
-  rendered.stderr === "",
-  rendered.stderr,
-);
-check(
-  "line 1 has the model and effort",
-  plain.startsWith("🧠 CI high · 💰$0.00 · +0 -0"),
-  plain,
-);
-check(
-  "line 2 has context and the 5-hour window",
-  plain.includes("💭 ctx 73% left · ⏳ 5h 76% left ↻"),
-  plain,
-);
-console.log(plain);
+for (const [name, [program, ...args]] of shells) {
+  const rendered = spawnSync(program, [...args, command], {
+    env,
+    encoding: "utf8",
+    input,
+  });
+  // eslint-disable-next-line no-control-regex -- ANSI color codes start with the ESC control character.
+  const plain = (rendered.stdout ?? "").replace(/\x1b\[[0-9;]*m/g, "");
+  check(
+    `${name}: the statusLine command renders three lines`,
+    rendered.status === 0 && plain.trimEnd().split(/\r?\n/).length === 3,
+    plain + rendered.stderr,
+  );
+  check(
+    `${name}: Node.js prints no warning while running the TypeScript`,
+    rendered.stderr === "",
+    rendered.stderr,
+  );
+  // PowerShell may re-encode the emoji of a native command, so check the ASCII part in every shell.
+  check(
+    `${name}: line 1 has the model and effort`,
+    plain.includes("CI high") && plain.includes("$0.00"),
+    plain,
+  );
+  check(
+    `${name}: line 2 has context and the 5-hour window`,
+    plain.includes("ctx 73% left") && plain.includes("5h 76% left"),
+    plain,
+  );
+  console.log(plain);
+}
 
 const sync = node("sync.mts", [data]);
 check(

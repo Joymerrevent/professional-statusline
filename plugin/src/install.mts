@@ -8,8 +8,9 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { homeDir, toForwardSlashes } from "./paths.mts";
 
 // The status line runs from a copy of plugin/src/ in the data folder: <data>/src/statusline.mts.
 // The plugin folder changes with every update, and the data folder does not, so settings.json points at the copy.
@@ -90,10 +91,60 @@ export function copySource(pluginRoot: string, dataDir: string): void {
 
 // Points a 0.1.0 install at the new copy: <data>/statusline.mjs becomes a one-line launcher of
 // <data>/src/statusline.mts, so its settings.json keeps working and picks up updates.
-export function relinkLegacyEntry(dataDir: string): void {
+// With `create`, writes the launcher even when <data>/statusline.mjs is missing.
+export function relinkLegacyEntry(dataDir: string, create = false): void {
   const legacy = legacyEntry(dataDir);
-  if (!existsSync(legacy) || readFileSync(legacy, "utf8") === LEGACY_LAUNCHER)
+  if (!create && !existsSync(legacy)) return;
+  if (existsSync(legacy) && readFileSync(legacy, "utf8") === LEGACY_LAUNCHER)
     return;
   writeFileSync(`${legacy}.tmp`, LEGACY_LAUNCHER);
   renameSync(`${legacy}.tmp`, legacy);
+}
+
+// The statusLine command. When the data folder is under the home folder, the path starts with $HOME.
+// bash, zsh, and PowerShell all expand $HOME inside double quotes (in PowerShell on Windows, $HOME is
+// USERPROFILE), so one settings.json works on every computer that shares it, whatever the user name.
+// Outside the home folder (CLAUDE_CONFIG_DIR elsewhere), the absolute path is written.
+export function statusLineCommand(
+  dataDir: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const entry = installedEntry(dataDir);
+  const fromHome = relative(homeDir(env), entry);
+  const underHome =
+    fromHome !== "" && !isAbsolute(fromHome) && fromHome.split(sep)[0] !== "..";
+  const path = underHome
+    ? `$HOME/${toForwardSlashes(fromHome)}`
+    : toForwardSlashes(entry);
+  return `node "${path}"`;
+}
+
+// This plugin's statusLine: the current command, or the one 0.1.0 wrote (<data>/statusline.mjs).
+export function isOurStatusLine(value: unknown): boolean {
+  const text = JSON.stringify(value ?? null);
+  return (
+    text.includes("professional-statusline") &&
+    (text.includes(ENTRY_NAME) || text.includes(LEGACY_ENTRY_NAME))
+  );
+}
+
+// Which entry of this data folder a statusLine runs: "current" (<data>/src/statusline.mts),
+// "legacy" (<data>/statusline.mjs from 0.1.0), or undefined when it runs something else.
+// Compares the data folder's own name, so the $HOME form and the absolute form both match.
+export function statusLineTarget(
+  value: unknown,
+  dataDir: string,
+): "current" | "legacy" | undefined {
+  // statusLine is either an object with a command, or the command string itself.
+  const command =
+    typeof value === "string"
+      ? value
+      : typeof value === "object" && value !== null && "command" in value
+        ? String(value.command)
+        : "";
+  const text = toForwardSlashes(command);
+  const id = basename(dataDir);
+  if (text.includes(`/${id}/src/${ENTRY_NAME}`)) return "current";
+  if (text.includes(`/${id}/${LEGACY_ENTRY_NAME}`)) return "legacy";
+  return undefined;
 }
