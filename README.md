@@ -77,7 +77,8 @@ If you uninstall first, `settings.json` keeps pointing at a file that no longer 
 ## How it works
 
 - Setup copies the plugin's TypeScript source (`plugin/src/`) into the plugin's data folder (`~/.claude/plugins/data/professional-statusline-professional-statusline/src/`) and points `statusLine` at the copy. The plugin's own folder changes with every update, and the data folder does not.
-- A `SessionStart` hook refreshes the copy after the plugin updates. The hook does nothing until you run setup, and it prints nothing.
+- When the data folder is under your home folder, the `statusLine` command starts with `$HOME` instead of the full path, so the same `settings.json` works on computers with different user names. bash, zsh, and PowerShell all expand `$HOME`.
+- A `SessionStart` hook refreshes the copy after the plugin updates. On a computer that shares your `settings.json` but has no copy yet, the hook makes the copy at the next start, once the plugin is installed there. Otherwise the hook does nothing until you run setup. It prints nothing.
 - Setup changes only the `statusLine` key. It refuses to write when `settings.json` is not valid JSON.
 
 ## Troubleshooting
